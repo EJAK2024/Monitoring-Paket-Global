@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\PortRepositoryInterface;
 use App\Models\Port;
 use Illuminate\Support\Collection;
 
-class WorldPortIndexService
+class WorldPortIndexService implements PortRepositoryInterface
 {
     public function getAll(): Collection
     {

@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
+use App\Contracts\ExchangeRateProviderInterface;
 use Illuminate\Support\Facades\Http;
 
-class ExchangeRateService
+class ExchangeRateService implements ExchangeRateProviderInterface
 {
     public function getRates(string $base = 'USD'): ?array
     {
@@ -25,11 +26,8 @@ class ExchangeRateService
 
     private function fallbackRates(string $base): array
     {
-        $common = [
-            'USD' => 1.0, 'EUR' => 0.92, 'GBP' => 0.79,
-            'JPY' => 149.5, 'CNY' => 7.24, 'IDR' => 15700,
-            'AUD' => 1.54, 'SGD' => 1.35, 'MYR' => 4.72,
-        ];
+        $path = database_path('data/fallback_rates.json');
+        $common = file_exists($path) ? (json_decode(file_get_contents($path), true) ?? []) : [];
 
         if ($base === 'USD') {
             return $common;

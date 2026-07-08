@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Contracts\ExchangeRateProviderInterface;
 use App\Http\Controllers\Controller;
-use App\Services\ExchangeRateService;
 use Illuminate\Http\Request;
 
 class CurrencyController extends Controller
 {
+    public function __construct(
+        protected ExchangeRateProviderInterface $exchangeRates,
+    ) {}
+
     public function index(Request $request)
     {
         $base = $request->base ?? 'USD';
-        $rates = app(ExchangeRateService::class)->getRates($base);
+        $rates = $this->exchangeRates->getRates($base);
 
         return response()->json($rates);
     }

@@ -2,11 +2,12 @@
 
 namespace App\Services;
 
+use App\Contracts\EconomicDataProviderInterface;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class WorldBankService
+class WorldBankService implements EconomicDataProviderInterface
 {
     public function getCountryData(string $isoCode): ?array
     {
@@ -37,6 +38,59 @@ class WorldBankService
     public function getCountryInfo(string $isoCode): ?array
     {
         return $this->fetchCountryInfo($isoCode);
+    }
+
+    /**
+     * Return a chronological time series (most-recent last) for a single indicator.
+     *
+     * @return array{date: string, value: float|null}[]
+     */
+    public function indicatorSeries(string $isoCode, string $key, int $years = 10): array
+    {
+        $code = config("worldbank.indicators.{$key}");
+        if (! $code) {
+            return [];
+        }
+
+        $date = now()->subYears($years)->format('Y');
+        $end = now()->format('Y');
+
+        try {
+            $response = Http::timeout(config('worldbank.timeout'))
+                ->get(config('worldbank.base_url')."/country/{$isoCode}/indicator/{$code}", [
+                    'format' => 'json',
+                    'date' => "{$date}:{$end}",
+                    'per_page' => 100,
+                ])->json();
+        } catch (\Exception $e) {
+            Log::warning("WorldBank series failed for {$isoCode}/{$key}: {$e->getMessage()}");
+
+            return [];
+        }
+
+        $rows = $response[1] ?? [];
+        if (empty($rows)) {
+            return [];
+        }
+
+        $normalize = in_array($key, config('worldbank.normalize'), true);
+
+        return collect($rows)
+            ->filter(fn ($r) => ! is_null($r['value'] ?? null))
+            ->map(function ($r) use ($normalize) {
+                $value = (float) $r['value'];
+                if ($normalize) {
+                    $value = round($value / 1e9, 2);
+                }
+
+                return [
+                    'date' => $r['date'],
+                    'value' => $value,
+                ];
+            })
+            ->sortBy('date')
+            ->values()
+            ->toArray();
     }
 
     private function fetchCountryInfo(string $isoCode): ?array

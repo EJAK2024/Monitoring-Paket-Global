@@ -2,10 +2,11 @@
 
 namespace App\Services;
 
+use App\Contracts\NewsProviderInterface;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 
-class GNewsService
+class GNewsService implements NewsProviderInterface
 {
     public function fetch(string $keyword = 'logistics trade shipping economy', int $max = 10): array
     {

@@ -1,7 +1,7 @@
 *.log
 .DS_Store
 .env
-.AGENTS.md
+AGENTS.md
 .env.backup
 .editorconfig
 .env.production
@@ -24,3 +24,4 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+tmp_check_ports.php

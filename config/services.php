@@ -46,4 +46,17 @@ return [
     'gnews' => [
         'key' => env('GNEWS_API_KEY'),
     ],
+
+    'vesselapi' => [
+        'key' => env('VESSELAPI_API_KEY'),
+        'url' => env('VESSELAPI_API_URL', 'https://api.vesselapi.com/v1'),
+    ],
+
+    'restcountries' => [
+        'key' => env('RESTCOUNTRIES_API_KEY'),
+    ],
+
+    'openexchangerates' => [
+        'app_id' => env('OPENEXCHANGERATES_APP_ID'),
+    ],
 ];

@@ -36,6 +36,12 @@
                 <a class="nav-link {{ request()->routeIs('portmap') ? 'active' : '' }}" href="{{ route('portmap') }}">
                     <i class="bi bi-map"></i> Peta Pelabuhan
                 </a>
+                <a class="nav-link {{ request()->routeIs('currency') ? 'active' : '' }}" href="{{ route('currency') }}">
+                    <i class="bi bi-currency-exchange"></i> Currency Impact Dashboard
+                </a>
+                <a class="nav-link {{ request()->routeIs('viz') ? 'active' : '' }}" href="{{ route('viz') }}">
+                    <i class="bi bi-graph-up"></i> Data Visualization
+                </a>
                 <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}" href="{{ route('admin.dashboard') }}">
                     <i class="bi bi-gear"></i> Admin Dashboard
                 </a>

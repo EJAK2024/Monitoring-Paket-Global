@@ -17,6 +17,14 @@ Route::get('/watchlist', function () {
     return view('watchlist.index', ['countries' => Country::all()]);
 })->name('watchlist');
 
+Route::get('/currency', function () {
+    return view('currency.index', ['countries' => Country::all()]);
+})->name('currency');
+
+Route::get('/viz', function () {
+    return view('viz.index', ['countries' => Country::all()]);
+})->name('viz');
+
 Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/ports', [AdminController::class, 'ports'])->name('ports');
@@ -28,6 +36,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
 Route::get('/portmap', [PortMapController::class, 'index'])->name('portmap');
 Route::get('/api/portmap/ports', [PortMapController::class, 'ports'])->name('portmap.ports');
+Route::get('/api/portmap/vessels', [PortMapController::class, 'vessels'])->name('portmap.vessels');
 
 Route::fallback(function () {
     return redirect()->route('dashboard');

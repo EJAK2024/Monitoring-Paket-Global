@@ -11,8 +11,9 @@ class PortSeeder extends Seeder
     {
         $jsonPath = database_path('data/world_ports.json');
 
-        if (!file_exists($jsonPath)) {
-            $this->command->error('world_ports.json not found at ' . $jsonPath);
+        if (! file_exists($jsonPath)) {
+            $this->command->error('world_ports.json not found at '.$jsonPath);
+
             return;
         }
 
@@ -20,6 +21,7 @@ class PortSeeder extends Seeder
 
         if (empty($ports)) {
             $this->command->error('world_ports.json is empty or invalid');
+
             return;
         }
 
@@ -27,6 +29,6 @@ class PortSeeder extends Seeder
             Port::create($port);
         }
 
-        $this->command->info('Imported ' . count($ports) . ' ports from World Port Index');
+        $this->command->info('Imported '.count($ports).' ports from World Port Index');
     }
 }

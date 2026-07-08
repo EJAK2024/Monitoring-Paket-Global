@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Port;
+use App\Services\VesselApiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class PortMapController extends Controller
 {
-    public function index(): View
+    public function index(VesselApiService $vesselApi): View
     {
         $routeDefs = [
             ['name' => 'Asia-Europe Express', 'type' => 'container', 'ships' => 6, 'ports' => ['Port of Shanghai', 'Port of Singapore', 'Port of Colombo', 'Port of Dubai', 'Port of Rotterdam']],
@@ -54,11 +56,48 @@ class PortMapController extends Controller
             }
         }
 
+        $liveVessels = [];
+        $apiStatus = 'inactive';
+
+        try {
+            if ($vesselApi->isKeyValid()) {
+                $apiStatus = 'active';
+                $mmsiList = Cache::remember('vesselapi.tracked_mmsi', 3600, function () use ($vesselApi) {
+                    $vessels = $vesselApi->searchVessels('MAERSK', 15);
+
+                    return collect($vessels)->pluck('mmsi')->take(10)->toArray();
+                });
+
+                if (! empty($mmsiList)) {
+                    $positions = $vesselApi->getMultiplePositions($mmsiList);
+                    $liveVessels = collect($positions)->map(function ($pos) {
+                        return [
+                            'mmsi' => $pos['mmsi'] ?? '',
+                            'name' => $pos['vessel_name'] ?? 'Unknown',
+                            'latitude' => $pos['latitude'] ?? null,
+                            'longitude' => $pos['longitude'] ?? null,
+                            'speed' => $pos['sog'] ?? 0,
+                            'heading' => $pos['cog'] ?? ($pos['heading'] ?? 0),
+                            'destination' => '',
+                            'status' => $pos['nav_status'] ?? 0,
+                        ];
+                    })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
+                }
+            } else {
+                $apiStatus = 'invalid_key';
+            }
+        } catch (\Exception $e) {
+            $apiStatus = 'error';
+            Log::warning('VesselAPI fetch failed, using simulation: '.$e->getMessage());
+        }
+
         return view('portmap.index', [
-            'portTypes' => Cache::remember('portmap.types', 3600, fn () =>
-                Port::whereNotNull('port_type')->distinct()->orderBy('port_type')->pluck('port_type')
+            'portTypes' => Cache::remember('portmap.types', 3600, fn () => Port::whereNotNull('port_type')->distinct()->orderBy('port_type')->pluck('port_type')
             ),
             'routes' => $routes,
+            'liveVessels' => $liveVessels,
+            'usingLiveData' => ! empty($liveVessels),
+            'apiStatus' => $apiStatus,
         ]);
     }
 
@@ -69,7 +108,7 @@ class PortMapController extends Controller
         $name = $request->get('name');
         $country = $request->get('country');
 
-        $cacheKey = 'portmap.ports.' . md5(serialize(compact('type', 'search', 'name', 'country')));
+        $cacheKey = 'portmap.ports.'.md5(serialize(compact('type', 'search', 'name', 'country')));
 
         $data = Cache::remember($cacheKey, 300, function () use ($type, $search, $name, $country) {
             $q = Port::query();
@@ -77,7 +116,7 @@ class PortMapController extends Controller
             if ($search) {
                 $q->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
-                      ->orWhere('country', 'like', "%{$search}%");
+                        ->orWhere('country', 'like', "%{$search}%");
                 });
             }
 
@@ -93,7 +132,7 @@ class PortMapController extends Controller
                 $q->where('port_type', $type);
             }
 
-            return $q->get()->map(fn($p) => [
+            return $q->get()->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
                 'country' => $p->country,
@@ -104,5 +143,44 @@ class PortMapController extends Controller
         });
 
         return response()->json($data);
+    }
+
+    public function vessels(VesselApiService $vesselApi): JsonResponse
+    {
+        $liveVessels = [];
+
+        try {
+            if ($vesselApi->isKeyValid()) {
+                $mmsiList = Cache::remember('vesselapi.tracked_mmsi', 3600, function () use ($vesselApi) {
+                    $vessels = $vesselApi->searchVessels('MAERSK', 15);
+
+                    return collect($vessels)->pluck('mmsi')->take(10)->toArray();
+                });
+
+                if (! empty($mmsiList)) {
+                    $positions = $vesselApi->getMultiplePositions($mmsiList);
+                    $liveVessels = collect($positions)->map(function ($pos) {
+                        return [
+                            'mmsi' => $pos['mmsi'] ?? '',
+                            'name' => $pos['vessel_name'] ?? 'Unknown',
+                            'latitude' => $pos['latitude'] ?? null,
+                            'longitude' => $pos['longitude'] ?? null,
+                            'speed' => $pos['sog'] ?? 0,
+                            'heading' => $pos['cog'] ?? ($pos['heading'] ?? 0),
+                            'destination' => '',
+                            'status' => $pos['nav_status'] ?? 0,
+                        ];
+                    })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
+                }
+            }
+        } catch (\Exception $e) {
+            Log::warning('VesselAPI vessels endpoint failed: '.$e->getMessage());
+        }
+
+        return response()->json([
+            'live' => $liveVessels,
+            'using_live_data' => ! empty($liveVessels),
+            'timestamp' => now()->toIso8601String(),
+        ]);
     }
 }
