@@ -5,7 +5,7 @@
 @section('content')
 <style>
     .content { padding: 0 !important; }
-    #sidebar { width: 380px; will-change: transform; border-right: 1px solid rgba(0,0,0,0.06); }
+    #sidebar { width: 380px; will-change: width; border-right: 1px solid rgba(0,0,0,0.06); transition: width 0.3s ease; }
     @media (max-width: 768px) { #sidebar { width: 100%; } }
     .vessel-item:hover, .port-item:hover { background: #f0f4ff; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
@@ -13,10 +13,15 @@
     .status-dot.inactive { background: #dc3545; }
     .status-dot.unknown { background: #6c757d; }
     .ship-panel-card { background: rgba(255,255,255,0.97); backdrop-filter: blur(8px); }
-    .sidebar-collapsed #sidebar { transform: translateX(-400px); }
-    #sidebarOpenBtn { display: none; transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 3px 14px rgba(0,0,0,0.18); }
-    .sidebar-collapsed #sidebarOpenBtn { display: flex; }
-    #sidebarOpenBtn:hover { transform: scale(1.08); box-shadow: 0 5px 20px rgba(0,0,0,0.25); }
+    .sidebar-collapsed #sidebar { width: 52px !important; min-width: 52px; }
+    .sidebar-collapsed #sidebar .sidebar-header > div:first-child > div,
+    .sidebar-collapsed #sidebar .sidebar-header > div:first-child > .badge,
+    .sidebar-collapsed #sidebar #sidebarTabs,
+    .sidebar-collapsed #sidebar .tab-content,
+    .sidebar-collapsed #sidebar .border-top { display: none !important; }
+    .sidebar-collapsed #sidebar .sidebar-header { justify-content: center; padding: 0.5rem; position: relative; }
+    .sidebar-collapsed #sidebar .sidebar-header #sidebarToggleBtn { position: absolute; top: 0.5rem; right: 0.25rem; }
+    #sidebarOpenBtn { display: none !important; }
     #sidebarToggleBtn { transition: all 0.25s ease; }
     #sidebarToggleBtn:hover { background: rgba(255,255,255,0.25) !important; }
     #sidebarToggleBtn .bi { transition: transform 0.35s ease; }
@@ -32,12 +37,20 @@
     .sidebar-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
 </style> 
 <div class="position-relative" style="height: 100vh;">
-    <div id="portMap" style="height: 100%; width: 100%; border-radius: 0;"></div>
+    <iframe
+        id="marineTrafficMap"
+        src="https://www.marinetraffic.com/en/ais/embed/zoom:3/centery:20/centerx:30/maptype:0/shownames:false/showmenu:false/remember:false"
+        style="height: 100%; width: 100%; border: 0;"
+        allowfullscreen
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        title="Marine Traffic Live Map">
+    </iframe>
 
-    <div id="sidebar" class="position-absolute top-0 start-0 shadow" style="z-index: 1020; height: 100vh; background: rgba(255,255,255,0.97); backdrop-filter: blur(8px); transition: transform 0.3s ease; display: flex; flex-direction: column;">
+    <div id="sidebar" class="position-absolute top-0 start-0 shadow" style="z-index: 1020; height: 100vh; background: rgba(255,255,255,0.97); backdrop-filter: blur(8px); display: flex; flex-direction: column;">
         <div class="sidebar-header d-flex justify-content-between align-items-center px-3" style="min-height: 52px;">
             <div class="d-flex align-items-center gap-2">
-                <i class="bi bi-grid-3x3-gap-fill text-primary" style="font-size:1.1rem;"></i>
+                <i class="" style="font-size:1.1rem;"></i>
                 <div>
                     <span class="fw-semibold" style="font-size:0.9rem;">Marine Monitor</span>
                     <small class="text-white-50 d-block" id="sidebarStatus" style="font-size:0.65rem;line-height:1;">Loading...</small>
@@ -74,6 +87,7 @@
 
         <div class="tab-content flex-grow-1 overflow-auto" style="font-size:0.85rem;">
             <div class="tab-pane fade show active p-2" id="panel-search" role="tabpanel">
+                <div class="panel-section-title mb-1"><i class="bi bi-search me-1"></i>Port Search</div>
                 <input type="text" id="portSearch" class="form-control form-control-sm mb-1" placeholder="Search port or country...">
                 <select id="portTypeFilter" class="form-select form-select-sm mb-1">
                     <option value="">All port types</option>
@@ -81,11 +95,19 @@
                         <option value="{{ $type }}">{{ $type }}</option>
                     @endforeach
                 </select>
-                <div id="searchResults" class="list-group mb-1" style="max-height: 260px; overflow-y: auto; display: none;"></div>
+                <div id="searchResults" class="list-group mb-1" style="max-height: 200px; overflow-y: auto; display: none;"></div>
                 <div class="d-flex align-items-center justify-content-between small text-muted bg-light rounded px-2 py-1 mt-1">
                     <span><i class="bi bi-geo-alt me-1"></i><span id="portCount">-</span></span>
                     <span><i class="bi bi-signpost-2 me-1"></i><span id="routeCount">-</span></span>
                 </div>
+                <hr class="my-2">
+                <div class="panel-section-title mb-1"><i class="bi bi-ship me-1"></i>Vessel Search</div>
+                <div class="input-group input-group-sm mb-1">
+                    <input type="text" id="vesselSearchInput" class="form-control" placeholder="Search by name, MMSI, or IMO...">
+                    <button id="vesselSearchBtn" class="btn btn-outline-primary" type="button"><i class="bi bi-search"></i></button>
+                </div>
+                <div id="vesselSearchResults" class="list-group mb-1" style="max-height: 280px; overflow-y: auto; display: none;"></div>
+                <div id="vesselSearchStatus" class="small text-muted mt-1" style="display:none;"></div>
             </div>
 
             <div class="tab-pane fade p-2" id="panel-ports" role="tabpanel">
@@ -116,6 +138,7 @@
                         <option value="tanker">Tanker</option>
                         <option value="bulk">Bulk Carrier</option>
                         <option value="lng">LNG Carrier</option>
+                        <option value="tracked">Tracked Only</option>
                     </select>
                     <button id="refreshVesselsBtn" class="btn btn-sm btn-outline-primary px-2" title="Refresh vessel data">
                         <i class="bi bi-arrow-clockwise"></i>
@@ -172,8 +195,8 @@
         <i class="bi bi-arrow-bar-right"></i>
     </button>
 
-    <div id="shipPanel" class="position-absolute bottom-0 start-0 p-3" style="z-index: 1000; display: none;">
-        <div class="card shadow ship-panel-card" style="width: 340px;">
+    <div id="shipPanel" class="position-absolute bottom-0 end-0 p-3" style="z-index: 1030; display: none;">
+        <div class="card shadow ship-panel-card" style="width: 280px;">
             <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center bg-primary text-white">
                 <span class="fw-semibold small"><i class="bi bi-ship"></i> <span id="shipPanelName">-</span></span>
                 <button class="btn btn-sm btn-outline-light py-0 px-1" onclick="closeShipPanel()">&times;</button>
@@ -185,12 +208,17 @@
                 <div class="row mb-1"><div class="col-5 text-muted">Route</div><div class="col-7" id="shipPanelRoute">-</div></div>
                 <div class="row mb-1"><div class="col-5 text-muted">Destination</div><div class="col-7" id="shipPanelDest">-</div></div>
                 <div class="row mb-1"><div class="col-5 text-muted">Status</div><div class="col-7" id="shipPanelStatus">-</div></div>
+                <div class="row mb-1" id="shipPanelMmsiRow" style="display:none;"><div class="col-5 text-muted">MMSI</div><div class="col-7" id="shipPanelMmsi">-</div></div>
+                <div class="row mb-1" id="shipPanelSourceRow" style="display:none;"><div class="col-5 text-muted">Source</div><div class="col-7" id="shipPanelSource">-</div></div>
                 <div class="mt-2 d-flex gap-2">
                     <button class="btn btn-sm btn-primary" id="shipFollowBtn" onclick="toggleFollowShip()">
                         <i class="bi bi-crosshair"></i> Follow
                     </button>
                     <button class="btn btn-sm btn-outline-info" id="shipRouteHighlightBtn" onclick="highlightShipRoute()">
                         <i class="bi bi-signpost-2"></i> Route
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="shipUntrackBtn" onclick="untrackSelectedShip()" style="display:none;">
+                        <i class="bi bi-x-circle"></i> Untrack
                     </button>
                 </div>
             </div>
@@ -201,19 +229,95 @@
 
 @section('scripts')
 <script>
-window.__ROUTES = @json($routes);
-window.__HAS_LIVE = @json(!empty($liveVessels));
-window.__LIVE_VESSELS = @json($liveVessels);
-window.__API_STATUS = {!! json_encode($apiStatus ?? 'unknown') !!};
-window.__MAPTILER_KEY = '{{ config('services.maptiler.key') }}';
+document.getElementById('sidebarStatus').textContent = 'Marine Traffic Embed';
+
+var mapFrame = document.getElementById('marineTrafficMap');
+var MT_BASE = 'https://www.marinetraffic.com/en/ais/embed';
+
+function navigateToPort(lat, lng, zoom) {
+    zoom = zoom || 12;
+    mapFrame.src = MT_BASE + '/zoom:' + zoom + '/centery:' + lat + '/centerx:' + lng + '/maptype:0/shownames:true/showmenu:false/remember:false';
+}
+
+var sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+var sidebarHidden = false;
+sidebarToggleBtn.addEventListener('click', function () {
+    sidebarHidden = !sidebarHidden;
+    document.body.classList.toggle('sidebar-collapsed', sidebarHidden);
+    sidebarToggleBtn.querySelector('i').className = sidebarHidden ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+});
+
+document.getElementById('portTypeFilter2').addEventListener('change', function () { loadPortList(this.value); });
+
+var allPorts = [];
+
+function renderPortItem(p) {
+    return '<div class="d-flex align-items-center justify-content-between py-1 px-2 border-bottom port-item" ' +
+        'style="cursor:pointer;" data-lat="' + p.latitude + '" data-lng="' + p.longitude + '" data-name="' + p.name + '">' +
+        '<div><div class="fw-semibold" style="font-size:0.85rem;">' + p.name + '</div>' +
+        '<small class="text-muted">' + p.country + '</small></div>' +
+        '<span class="badge bg-primary rounded-pill" style="font-size:0.7rem;">' + (p.port_type||'N/A') + '</span></div>';
+}
+
+function loadPortList(type) {
+    var filtered = type ? allPorts.filter(function(p){ return p.port_type === type; }) : allPorts;
+    document.getElementById('portCount2').textContent = filtered.length;
+    document.getElementById('portList').innerHTML = filtered.map(renderPortItem).join('');
+}
+
+function showSearchResults(results) {
+    var el = document.getElementById('searchResults');
+    if (!results.length) { el.style.display = 'none'; return; }
+    el.style.display = 'block';
+    el.innerHTML = results.map(function(p){
+        return '<button type="button" class="list-group-item list-group-item-action py-1" data-lat="' + p.latitude + '" data-lng="' + p.longitude + '" data-name="' + p.name + '">' +
+            '<div class="fw-semibold" style="font-size:0.8rem;">' + p.name + '</div>' +
+            '<small class="text-muted">' + p.country + ' &middot; ' + (p.port_type||'N/A') + '</small></button>';
+    }).join('');
+}
+
+document.getElementById('portList').addEventListener('click', function(e) {
+    var item = e.target.closest('.port-item');
+    if (!item) return;
+    var lat = parseFloat(item.dataset.lat);
+    var lng = parseFloat(item.dataset.lng);
+    if (!isNaN(lat) && !isNaN(lng)) navigateToPort(lat, lng, 12);
+});
+
+document.getElementById('searchResults').addEventListener('click', function(e) {
+    var btn = e.target.closest('[data-lat]');
+    if (!btn) return;
+    var lat = parseFloat(btn.dataset.lat);
+    var lng = parseFloat(btn.dataset.lng);
+    if (!isNaN(lat) && !isNaN(lng)) navigateToPort(lat, lng, 12);
+});
+
+var searchTimeout = null;
+document.getElementById('portSearch').addEventListener('input', function() {
+    var q = this.value.trim().toLowerCase();
+    clearTimeout(searchTimeout);
+    if (q.length < 2) { document.getElementById('searchResults').style.display = 'none'; return; }
+    searchTimeout = setTimeout(function() {
+        var typeFilter = document.getElementById('portTypeFilter').value;
+        var results = allPorts.filter(function(p) {
+            var matchName = p.name.toLowerCase().indexOf(q) !== -1;
+            var matchCountry = p.country.toLowerCase().indexOf(q) !== -1;
+            var matchType = !typeFilter || p.port_type === typeFilter;
+            return (matchName || matchCountry) && matchType;
+        });
+        showSearchResults(results.slice(0, 15));
+    }, 200);
+});
+
+fetch('/api/portmap/ports').then(function(r){return r.json();}).then(function(ports){
+    allPorts = ports;
+    document.getElementById('portCount').textContent = ports.length + ' ports';
+    document.getElementById('routeCount').textContent = '-';
+    loadPortList('');
+});
+
+document.getElementById('vesselUpdateInfo').textContent = 'Live data via Marine Traffic';
+document.getElementById('shipCount2').textContent = '-';
+document.getElementById('vesselList').innerHTML = '<div class="text-center text-muted py-3" style="font-size:0.8rem;">Vessels tracked via Marine Traffic embed</div>';
 </script>
-@if (count($routes) === 0)
-<script>
-    (function(){
-        var el = document.getElementById('sidebarStatus');
-        if (el) el.textContent = 'No routes — seed ports first';
-    })();
-</script>
-@endif
-@vite('resources/js/portmap.js')
 @endsection

@@ -12,6 +12,7 @@ use App\Contracts\RiskEngineInterface;
 use App\Contracts\SentimentAnalyzerInterface;
 use App\Contracts\VesselTrackingInterface;
 use App\Contracts\WeatherServiceInterface;
+use App\Services\VesselFinderService;
 use App\Services\ExchangeRateService;
 use App\Services\GNewsService;
 use App\Services\OpenExchangeRatesService;
@@ -19,7 +20,6 @@ use App\Services\OpenMeteoService;
 use App\Services\RestCountriesService;
 use App\Services\RiskService;
 use App\Services\SentimentService;
-use App\Services\VesselApiService;
 use App\Services\WorldBankService;
 use App\Services\WorldPortIndexService;
 use Illuminate\Support\ServiceProvider;
@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(ExchangeRateProviderInterface::class, ExchangeRateService::class);
         $this->app->bind(CurrencyTrendProviderInterface::class, OpenExchangeRatesService::class);
         $this->app->bind(SentimentAnalyzerInterface::class, SentimentService::class);
-        $this->app->bind(VesselTrackingInterface::class, VesselApiService::class);
+        $this->app->bind(VesselTrackingInterface::class, VesselFinderService::class);
         $this->app->bind(PortRepositoryInterface::class, WorldPortIndexService::class);
         $this->app->bind(RiskEngineInterface::class, RiskService::class);
     }

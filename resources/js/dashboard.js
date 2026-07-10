@@ -78,7 +78,7 @@ function dash_loadCountry(id) {
             dash_renderCharts(country);
 
             const name = country.name;
-            dash_fetchWeatherMap(name);
+            dash_fetchWeatherMap(country.name, country.iso_code);
             dash_loadNews(name);
             dash_updateWatchlistBtn();
         })
@@ -172,74 +172,117 @@ function dash_stormRisk(code, wind) {
     return Math.min(100, Math.max(s, ws));
 }
 
-function dash_fetchWeatherMap(countryName) {
-    document.getElementById('dash_weatherMapLabel').textContent = `Loading weather for ${countryName}...`;
+var dash_countryCoords = {
+    DE:[51.1657,10.4515],CN:[35.8617,104.1954],ID:[-0.7893,113.9213],AU:[-25.2744,133.7751],
+    US:[37.0902,-95.7129],JP:[36.2048,138.2529],SG:[1.3521,103.8198],MY:[4.2105,101.9753],
+    GB:[55.3781,-3.4360],IN:[20.5937,78.9629],TH:[15.8700,100.9925],VN:[14.0583,108.2772],
+    PH:[12.8797,121.7740],KR:[35.9078,127.7669],TW:[23.6978,120.9605],HK:[22.3193,114.1694],
+    NL:[52.1326,5.2913],BE:[50.8503,4.3517],FR:[46.2276,2.2137],ES:[40.4637,-3.7492],
+    IT:[41.8719,12.5674],PT:[39.3999,-8.2245],SE:[60.1282,18.6435],PL:[51.9194,19.1451],
+    RO:[45.9432,24.9668],GR:[39.0742,21.8243],TR:[38.9637,35.2433],RU:[61.5240,105.3188],
+    UA:[48.3794,31.1656],CA:[56.1304,-106.3468],BR:[-14.2350,-51.9253],AR:[-38.4161,-63.6167],
+    CL:[-35.6751,-71.5430],CO:[4.5709,-74.2973],PE:[-9.1900,-75.0152],PA:[8.5380,-80.7821],
+    MX:[23.6345,-102.5528],ZA:[-30.5595,22.9375],NG:[9.0820,8.6753],EG:[26.8206,30.8025],
+    KE:[-0.0236,37.9062],TZ:[-6.3690,34.8888],GH:[7.9465,-1.0232],CI:[7.5400,-5.5471],
+    MA:[31.7917,-7.0926],AE:[23.4241,53.8478],SA:[23.8859,45.0792],OM:[21.4735,55.9754],
+    QA:[25.3548,51.1839],KW:[29.3117,47.4818],IQ:[33.2232,43.6793],IR:[32.4279,53.6880],
+    PK:[30.3753,69.3451],BD:[23.6850,90.3563],MM:[21.9162,95.9560],LK:[7.8731,80.7718],
+    FJ:[-17.7134,178.0650],DZ:[28.0339,1.6596],TN:[33.8869,9.5375],LY:[26.3351,17.2283],
+    LB:[33.8547,35.8623],IL:[31.0461,34.8516],JO:[30.5852,36.2384],SY:[34.8021,38.9968],
+    BH:[26.0667,50.5577],FK:[-51.7963,-59.5236],CK:[-21.2098,-159.7804],TO:[-21.1790,-175.1982],
+    WS:[-13.7590,-172.1046],FJ:[-17.7134,178.0650],PG:[-6.3150,143.9555],MN:[46.8625,103.8467],
+    MM:[21.9162,95.9560],KH:[12.5657,104.9910],LA:[19.8567,102.4955],NP:[28.3949,84.1240],
+    BD:[23.6850,90.3563],BT:[27.5142,90.4336],MV:[3.2028,73.2207],BN:[4.5353,114.7277],
+    TL:[-8.8742,125.7275],MG:[-18.7669,46.8691],MU:[-20.3484,57.5522],SC:[-4.6796,55.4920],
+    MZ:[-18.6657,35.5296],AO:[-11.2027,17.8739],CM:[7.3697,12.3547],GA:[-0.8037,11.6094],
+    SN:[14.4974,-14.4524],GN:[9.9456,-9.6966],SL:[8.4606,-11.7799],LR:[6.4281,-9.4295],
+    CF:[6.6111,20.9394],TD:[15.4542,18.7322],NE:[17.6078,8.0817],ML:[17.5707,-3.9961],
+    BF:[12.3714,-1.5197],MZ:[-18.6657,35.5296],ZM:[-13.1339,28.6387],ZW:[-19.0154,29.1549],
+    BW:[-22.3285,24.6849],NA:[-22.9576,18.4904],SZ:[-26.5225,31.4659],LS:[-29.6100,28.2336],
+    UG:[1.3733,32.2903],RW:[-1.9403,29.8739],BI:[-3.3731,29.9189],ET:[9.1450,40.4897],
+    SO:[5.1521,46.1996],DJ:[11.8251,42.5903],ER:[15.1794,39.7823],SS:[6.8770,31.3070],
+    SD:[12.8628,30.2176],TD:[15.4542,18.7322],CG:[-0.2280,15.8277],GQ:[1.6508,10.2679],
+    GA:[-0.8037,11.6094],ST:[0.1864,6.6131],CV:[16.5388,-23.0418],GM:[13.4432,-15.3101],
+    GW:[11.8037,-15.1804],TG:[8.6195,1.2080],BJ:[9.3077,2.3158],SO:[5.1521,46.1996],
+    MR:[21.0079,-10.9408],KM:[-11.6455,43.3333],MW:[-13.2543,34.3015],
+    MY:[4.2105,101.9753],BN:[4.5353,114.7277],TL:[-8.8742,125.7275],
+    CU:[21.5218,-77.7812],JM:[18.1096,-77.2975],BS:[25.0343,-77.3963],BB:[13.1939,-59.5432],
+    TT:[10.6918,-61.2225],GY:[4.8604,-58.9302],SR:[3.9193,-56.0278],HT:[18.9712,-72.2852],
+    DO:[18.7357,-70.1627],PR:[18.2208,-66.5901],VE:[6.4238,-66.5897],EC:[-1.8312,-78.1834],
+    BO:[-16.2902,-63.5887],PY:[-23.4425,-58.4438],UY:[-32.5228,-55.7658],GF:[4.9429,-52.2330],
+    FK:[-51.7963,-59.5236],GI:[36.1408,-5.3536],AD:[42.5063,1.5218],MC:[43.7384,7.4246],
+    LI:[47.1660,9.5554],SM:[43.9424,12.4578],VA:[41.9029,12.4534],MT:[35.9375,14.3754],
+    CY:[35.1264,33.4299],IS:[64.9631,-19.0208],NO:[60.4720,8.4689],FI:[61.9241,25.7482],
+    DK:[56.2639,9.5018],EE:[58.5953,25.0136],LV:[56.8796,24.6032],LT:[55.1694,23.8813],
+    BY:[53.7098,27.9534],MD:[47.4116,28.3699],AL:[41.1533,20.1683],BA:[43.9159,17.6791],
+    ME:[42.7087,19.3744],RS:[44.0165,21.0059],MK:[41.5122,21.7453],XK:[42.6026,20.9020],
+    CU:[21.5218,-77.7812],JM:[18.1096,-77.2975],BS:[25.0343,-77.3963],
+    GH:[7.9465,-1.0232],LR:[6.4281,-9.4295],TG:[8.6195,1.2080]
+};
+
+function dash_fetchWeatherMap(countryName, countryCode) {
+    document.getElementById('dash_weatherMapLabel').textContent = `Loading map for ${countryName}...`;
 
     dash_weatherMarkers.forEach(m => dash_weatherMap.removeLayer(m));
     dash_weatherMarkers = [];
 
-    fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(countryName)}&count=5&language=en&format=json`)
+    var coords = dash_countryCoords[countryCode] || null;
+
+    const portsPromise = fetch(`/api/portmap/ports?country=${encodeURIComponent(countryName)}`)
         .then(r => r.json())
-        .then(geo => {
-            if (!geo.results?.length) {
-                document.getElementById('dash_weatherMapLabel').textContent = 'No weather data found.';
-                return;
-            }
-            const promises = geo.results.map(loc => {
-                const lat = parseFloat(loc.latitude);
-                const lon = parseFloat(loc.longitude);
-                return fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,precipitation,wind_speed_10m,weather_code&timezone=auto`)
-                    .then(r => r.json())
-                    .then(data => ({ loc, data }));
+        .catch(() => []);
+
+    portsPromise.then(ports => {
+        if (!coords && !ports.length) {
+            document.getElementById('dash_weatherMapLabel').textContent = 'No data found.';
+            return;
+        }
+
+        var allMarkers = [];
+
+        if (coords) {
+            const countryIcon = L.divIcon({
+                className: '',
+                html: '<div style="font-size:30px;line-height:1;text-align:center;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4));">📍</div>',
+                iconSize: [30, 36],
+                iconAnchor: [15, 36],
+                popupAnchor: [0, -38],
             });
 
-            return Promise.all(promises);
-        })
-        .then(results => {
-            if (!results) return;
+            const countryMarker = L.marker(coords, { icon: countryIcon })
+                .addTo(dash_weatherMap)
+                .bindPopup(`<strong>📍 ${countryName}</strong>`, { maxWidth: 200 });
+            allMarkers.push(countryMarker);
+        }
 
-            results.forEach(({ loc, data }) => {
-                const c = data.current || {};
-                const wc = c.weather_code ?? 0;
-                const emoji = wc <= 2 ? '☀️' : wc <= 5 ? '⛅' : wc <= 50 ? '🌧️' : '⛈️';
-
-                const marker = L.marker([loc.latitude, loc.longitude], {
-                    icon: L.divIcon({
-                        className: '',
-                        html: `<div style="font-size:24px;line-height:1;text-align:center;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.3));">${emoji}</div>
-                               <div style="font-size:10px;font-weight:700;color:#1e293b;background:#fff;border-radius:8px;padding:0 4px;text-align:center;white-space:nowrap;box-shadow:0 1px 3px rgba(0,0,0,0.15);">${c.temperature_2m ?? '-'}°</div>`,
-                        iconSize: [36, 40],
-                        iconAnchor: [18, 40],
-                        popupAnchor: [0, -42],
-                    })
-                }).addTo(dash_weatherMap)
-                .bindPopup(`
-                    <div style="min-width:180px;">
-                        <div class="d-flex align-items-center gap-2 mb-1">
-                            <span style="font-size:20px;">${emoji}</span>
-                            <strong>${loc.name}${loc.country ? ', ' + loc.country : ''}</strong>
-                        </div>
-                        <hr style="margin:4px 0;">
-                        <div style="font-size:0.85rem;">
-                            <div>🌡️ <strong>${c.temperature_2m ?? '-'}°C</strong> Temperature</div>
-                            <div>🌧️ <strong>${c.precipitation ?? 0} mm</strong> Precipitation</div>
-                            <div>💨 <strong>${c.wind_speed_10m ?? '-'} km/h</strong> Wind</div>
-                            <div>⛈️ <strong>${dash_stormRisk(c.weather_code ?? 0, c.wind_speed_10m ?? 0)}</strong> Storm Risk (0-100)</div>
-                        </div>
-                    </div>
-                `, { maxWidth: 220 });
-                dash_weatherMarkers.push(marker);
+        if (ports.length > 0) {
+            const portIcon = L.divIcon({
+                className: '',
+                html: '<div style="font-size:22px;line-height:1;text-align:center;filter:drop-shadow(0 1px 4px rgba(0,0,0,0.35));">⚓</div>',
+                iconSize: [22, 26],
+                iconAnchor: [11, 26],
+                popupAnchor: [0, -28],
             });
 
-            if (dash_weatherMarkers.length > 0) {
-                const group = L.featureGroup(dash_weatherMarkers);
-                dash_weatherMap.fitBounds(group.getBounds().pad(0.3));
-            }
-            document.getElementById('dash_weatherMapLabel').textContent = `Weather in ${countryName}`;
-        })
-        .catch(() => {
-            document.getElementById('dash_weatherMapLabel').textContent = 'Weather map data unavailable.';
-        });
+            ports.forEach(p => {
+                const pm = L.marker([p.latitude, p.longitude], { icon: portIcon })
+                    .addTo(dash_weatherMap)
+                    .bindPopup(`<strong>⚓ ${p.name}</strong><br><small>${p.country} &middot; ${p.port_type || 'N/A'}</small>`, { maxWidth: 200 });
+                allMarkers.push(pm);
+            });
+        }
+
+        if (allMarkers.length > 0) {
+            dash_weatherMarkers = allMarkers;
+            const group = L.featureGroup(allMarkers);
+            dash_weatherMap.fitBounds(group.getBounds().pad(0.3));
+        }
+
+        const portLabel = ports.length > 0 ? ` · ${ports.length} ports` : '';
+        document.getElementById('dash_weatherMapLabel').textContent = `${countryName}${portLabel}`;
+    }).catch(() => {
+        document.getElementById('dash_weatherMapLabel').textContent = 'Map data unavailable.';
+    });
 }
 
 function dash_loadCurrency(base) {

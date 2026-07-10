@@ -37,6 +37,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
 Route::get('/portmap', [PortMapController::class, 'index'])->name('portmap');
 Route::get('/api/portmap/ports', [PortMapController::class, 'ports'])->name('portmap.ports');
 Route::get('/api/portmap/vessels', [PortMapController::class, 'vessels'])->name('portmap.vessels');
+Route::get('/api/portmap/search-vessels', [PortMapController::class, 'searchVessels'])->name('portmap.search-vessels');
+Route::get('/api/portmap/vessel-position/{mmsi}', [PortMapController::class, 'vesselPosition'])->name('portmap.vessel-position');
+Route::post('/api/portmap/track-vessel/{mmsi}', [PortMapController::class, 'trackVessel'])->name('portmap.track-vessel');
+Route::post('/api/portmap/untrack-vessel/{mmsi}', [PortMapController::class, 'untrackVessel'])->name('portmap.untrack-vessel');
 
 Route::fallback(function () {
     return redirect()->route('dashboard');

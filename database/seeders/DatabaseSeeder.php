@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CountrySeeder::class,
             PortSeeder::class,
+            VesselSeeder::class,
             PositiveWordSeeder::class,
             NegativeWordSeeder::class,
             NewsCacheSeeder::class,

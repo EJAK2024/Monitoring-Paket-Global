@@ -53,12 +53,17 @@ class SentimentService implements SentimentAnalyzerInterface
             $sentiment = 'neutral';
         }
 
+        $positivePercent = round($positiveScore / $total * 100);
+        $negativePercent = round(($negativeScore + $crisisScore) / $total * 100);
+        $crisisPercent = round($crisisScore / $total * 100);
+        $neutralPercent = max(0, 100 - $positivePercent - $negativePercent);
+
         return [
             'sentiment' => $sentiment,
-            'positive' => round($positiveScore / $total * 100),
-            'negative' => round(($negativeScore + $crisisScore) / $total * 100),
-            'crisis' => round($crisisScore / $total * 100),
-            'neutral' => 0,
+            'positive' => $positivePercent,
+            'negative' => $negativePercent,
+            'crisis' => $crisisPercent,
+            'neutral' => $neutralPercent,
         ];
     }
 }

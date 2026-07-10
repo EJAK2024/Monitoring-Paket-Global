@@ -58,6 +58,9 @@ let usingLiveData = window.__HAS_LIVE;
 let liveVesselData = window.__LIVE_VESSELS;
 let lastVesselFetch = null;
 let apiStatus = window.__API_STATUS;
+let trackedVessels = [];
+let vesselSearchDebounce = null;
+let trackedRefreshInterval = null;
 const MAPTILER_KEY = window.__MAPTILER_KEY;
 
 function createPortIcon(type) {
@@ -87,7 +90,7 @@ function loadPorts(type) {
                 const lon = parseFloat(p.longitude);
                 if (isNaN(lat) || isNaN(lon)) continue;
 
-                markers.push(L.marker([lat, lon], { icon: createPortIcon(p.port_type) })
+                const marker = L.marker([lat, lon], { icon: createPortIcon(p.port_type) })
                     .bindPopup(`
                         <div style="min-width:180px;">
                             <h6 style="margin:0 0 4px;">${p.name}</h6>
@@ -96,7 +99,11 @@ function loadPorts(type) {
                                 <span class="badge bg-${p.port_type === 'Container' ? 'primary' : p.port_type === 'Energy' ? 'success' : p.port_type === 'Industrial' ? 'warning text-dark' : 'danger'}">${p.port_type || 'N/A'}</span>
                             </div>
                         </div>
-                    `));
+                    `)
+                    .on('click', function () {
+                        flyToPort(lat, lon, p.name);
+                    });
+                markers.push(marker);
             }
             clusterGroup.addLayers(markers);
 
@@ -107,7 +114,10 @@ function loadPorts(type) {
 }
 
 function flyToPort(lat, lon, name) {
-    portMap.flyTo([lat, lon], 8, { duration: 1 });
+    var map = window._portMap || portMap;
+    if (!map) return;
+    map.invalidateSize();
+    map.setView([lat, lon], 8, { animate: true });
     document.getElementById('searchResults').style.display = 'none';
     document.getElementById('portSearch').value = name || '';
 }
@@ -283,15 +293,20 @@ function buildShipMarkers() {
             pos = getWaypointAtProgress(ship.waypoints, ship.progress);
         }
 
+        const isTracked = ship.isTracked;
+        const markerColor = isTracked ? '#f59e0b' : ship.type.color;
+        const markerSize = isTracked ? ship.type.size + 4 : ship.type.size;
+        const glowStyle = isTracked ? 'filter: drop-shadow(0 0 6px rgba(245,158,11,0.8));' : '';
+
         const marker = L.marker([pos.lat, pos.lng], {
             icon: L.divIcon({
                 className: '',
-                html: `<div style="font-size:${ship.type.size}px;line-height:1;color:${ship.type.color};text-shadow:0 0 4px rgba(0,0,0,0.5);transform:rotate(${pos.heading}deg);transition:transform 0.3s;cursor:pointer;">${ship.type.shape}</div>`,
-                iconSize: [ship.type.size, ship.type.size],
-                iconAnchor: [ship.type.size / 2, ship.type.size / 2],
+                html: `<div style="font-size:${markerSize}px;line-height:1;color:${markerColor};text-shadow:0 0 4px rgba(0,0,0,0.5);transform:rotate(${pos.heading}deg);transition:transform 0.3s;cursor:pointer;${glowStyle}">${isTracked ? '\u25b6' : ship.type.shape}</div>`,
+                iconSize: [markerSize, markerSize],
+                iconAnchor: [markerSize / 2, markerSize / 2],
             }),
             interactive: true,
-            zIndexOffset: 10000 + ship.id,
+            zIndexOffset: isTracked ? 20000 + ship.id : 10000 + ship.id,
         });
 
         const navStatus = getShipStatus(ship);
@@ -314,6 +329,8 @@ function buildShipMarkers() {
                     <div>Destination: <strong>${dest}</strong></div>
                     <div>Status: <span class="${navClass}">\u25cf ${navStatus}</span></div>
                     ${ship.isLive ? '<div><span class="badge bg-success" style="font-size:0.6rem;">LIVE AIS</span></div>' : ''}
+                    ${isTracked ? '<div><span class="badge bg-warning text-dark" style="font-size:0.6rem;">TRACKED</span></div>' : ''}
+                    ${ship.mmsi ? '<div class="text-muted" style="font-size:0.7rem;">MMSI: ' + ship.mmsi + '</div>' : ''}
                 </div>
                 <button class="btn btn-sm btn-outline-primary mt-2" onclick="selectShip(${ship.id})">Track this vessel</button>
             </div>
@@ -409,6 +426,22 @@ function selectShip(id) {
     document.getElementById('shipPanelDest').textContent = dest;
     document.getElementById('shipPanelStatus').textContent = '\u25cf ' + getShipStatus(ship);
 
+    const mmsiRow = document.getElementById('shipPanelMmsiRow');
+    const sourceRow = document.getElementById('shipPanelSourceRow');
+    const untrackBtn = document.getElementById('shipUntrackBtn');
+
+    if (ship.isTracked && ship.mmsi) {
+        mmsiRow.style.display = 'flex';
+        document.getElementById('shipPanelMmsi').textContent = ship.mmsi;
+        sourceRow.style.display = 'flex';
+        document.getElementById('shipPanelSource').textContent = ship.data_source || 'AIS';
+        untrackBtn.style.display = 'inline-block';
+    } else {
+        mmsiRow.style.display = 'none';
+        sourceRow.style.display = 'none';
+        untrackBtn.style.display = 'none';
+    }
+
     if (ship.marker) {
         ship.marker.openPopup();
     }
@@ -476,7 +509,7 @@ function renderPortList() {
 
     list.innerHTML = filtered.map(p => `
         <div class="d-flex align-items-center justify-content-between py-1 px-2 border-bottom port-item" style="cursor:pointer;"
-             onclick="flyToPort(${p.latitude}, ${p.longitude}, '${p.name.replace(/'/g, "\\'")}')">
+             data-lat="${p.latitude}" data-lng="${p.longitude}" data-name="${p.name.replace(/"/g, '&quot;')}">
             <div>
                 <div class="fw-semibold" style="font-size:0.85rem;">${p.name}</div>
                 <small class="text-muted">${p.country}</small>
@@ -489,7 +522,12 @@ function renderPortList() {
 function renderVesselList() {
     const typeFilter = document.getElementById('vesselTypeFilter').value;
     const list = document.getElementById('vesselList');
-    const filtered = typeFilter ? ships.filter(s => s.typeKey === typeFilter) : ships;
+    let filtered;
+    if (typeFilter === 'tracked') {
+        filtered = ships.filter(s => s.isTracked);
+    } else {
+        filtered = typeFilter ? ships.filter(s => s.typeKey === typeFilter) : ships;
+    }
 
     document.getElementById('shipCount2').textContent = filtered.length;
 
@@ -518,6 +556,8 @@ function renderVesselList() {
                     <small class="text-muted">
                         ${routeData[ship.routeIndex]?.name || 'N/A'} \u00b7 ${pos.heading.toFixed(0)}\u00b0
                         ${ship.isLive ? '<span class="badge bg-success ms-1" style="font-size:0.6rem;">LIVE</span>' : ''}
+                        ${ship.isTracked ? '<span class="badge bg-warning text-dark ms-1" style="font-size:0.6rem;">TRACKED</span>' : ''}
+                        ${ship.isTracked && ship.mmsi ? '<br><span style="font-size:0.65rem;">MMSI: ' + ship.mmsi + '</span>' : ''}
                     </small>
                 </div>
                 <span class="badge bg-${ship.typeKey === 'container' ? 'primary' : ship.typeKey === 'tanker' ? 'danger' : ship.typeKey === 'bulk' ? 'success' : 'info'} rounded-pill" style="font-size:0.7rem;">${ship.type.label}</span>
@@ -526,10 +566,217 @@ function renderVesselList() {
     }).join('');
 }
 
+function searchVesselsLocal(query) {
+    const input = document.getElementById('vesselSearchInput');
+    const resultsDiv = document.getElementById('vesselSearchResults');
+    const statusDiv = document.getElementById('vesselSearchStatus');
+
+    if (!query || query.length < 2) {
+        resultsDiv.style.display = 'none';
+        statusDiv.style.display = 'none';
+        return;
+    }
+
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Searching...';
+
+    clearTimeout(vesselSearchDebounce);
+    vesselSearchDebounce = setTimeout(() => {
+        fetch(`/api/portmap/search-vessels?q=${encodeURIComponent(query)}&limit=15`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.style.display = 'none';
+                    statusDiv.textContent = 'No vessels found';
+                    return;
+                }
+
+                statusDiv.textContent = `${data.results.length} results`;
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = data.results.map(v => {
+                    const typeColors = { container: '#0d6efd', tanker: '#dc3545', bulk: '#198754', lng: '#0dcaf0' };
+                    const color = typeColors[v.vessel_type] || '#6c757d';
+                    const isTracked = trackedVessels.some(t => t.mmsi === v.mmsi);
+                    const hasPos = v.latitude && v.longitude;
+
+                    return `
+                        <div class="list-group-item list-group-item-action py-2 px-2 vessel-search-item" style="cursor:pointer;border-left:3px solid ${color};"
+                            data-mmsi="${v.mmsi}" data-name="${v.name.replace(/"/g, '&quot;')}" data-lat="${v.latitude || ''}" data-lng="${v.longitude || ''}" data-tracked="${isTracked ? '1' : '0'}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div style="flex:1;">
+                                    <div class="fw-semibold" style="font-size:0.82rem;">${v.name}</div>
+                                    <small class="text-muted" style="font-size:0.72rem;">
+                                        ${v.mmsi} ${v.flag_country ? '· ' + v.flag_country : ''}
+                                    </small>
+                                </div>
+                                <div class="d-flex gap-1">
+                                    ${hasPos && !isTracked ? `<button class="btn btn-sm btn-outline-success py-0 px-1 vessel-track-btn" style="font-size:0.7rem;" data-mmsi="${v.mmsi}" data-name="${v.name.replace(/"/g, '&quot;')}"><i class="bi bi-crosshair"></i> Track</button>` : ''}
+                                    ${isTracked ? `<span class="badge bg-success py-0" style="font-size:0.65rem;">TRACKED</span>` : ''}
+                                    ${hasPos ? `<button class="btn btn-sm btn-outline-primary py-0 px-1 vessel-goto-btn" style="font-size:0.7rem;" data-lat="${v.latitude}" data-lng="${v.longitude}" data-name="${v.name.replace(/"/g, '&quot;')}"><i class="bi bi-geo-alt"></i></button>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            })
+            .catch(() => {
+                statusDiv.textContent = 'Search failed';
+            });
+    }, 300);
+}
+
+function trackVesselFromSearch(mmsi, name, event) {
+    if (event) { event.stopPropagation(); event.preventDefault(); }
+
+    const btn = event ? event.target.closest('button') : null;
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+    }
+
+    fetch(`/api/portmap/track-vessel/${mmsi}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' } })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.vessel) {
+                addTrackedVesselToMap(data.vessel);
+                searchVesselsLocal(document.getElementById('vesselSearchInput').value);
+                renderVesselList();
+            }
+        })
+        .catch(() => {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="bi bi-crosshair"></i> Track'; }
+        });
+}
+
+function addTrackedVesselToMap(v) {
+    const existing = ships.find(s => s.mmsi === v.mmsi);
+    if (existing) {
+        if (v.latitude && v.longitude) {
+            existing.realLat = parseFloat(v.latitude);
+            existing.realLng = parseFloat(v.longitude);
+            existing.isLive = true;
+            existing.isTracked = true;
+            existing.name = v.name;
+            existing.speed = v.speed || 0;
+            existing.heading = v.heading || 0;
+            existing.destination = v.destination || '';
+            existing.nav_status = v.nav_status || '';
+            existing.data_source = v.data_source || '';
+            if (existing.marker) {
+                existing.marker.setLatLng([existing.realLat, existing.realLng]);
+            }
+        }
+        return;
+    }
+
+    if (!v.latitude || !v.longitude) return;
+
+    const typeKey = v.vessel_type || 'container';
+    const typeDef = SHIP_TYPES[typeKey] || SHIP_TYPES.container;
+
+    const ship = {
+        id: shipIdCounter++,
+        mmsi: v.mmsi,
+        imo: v.imo || '',
+        name: v.name,
+        typeKey: typeKey,
+        type: typeDef,
+        routeIndex: 0,
+        waypoints: [],
+        progress: 0,
+        speed: v.speed || 0,
+        baseSpeed: v.speed || 0,
+        isLive: true,
+        isTracked: true,
+        navstat: 0,
+        destination: v.destination || '',
+        realLat: parseFloat(v.latitude),
+        realLng: parseFloat(v.longitude),
+        heading: v.heading || 0,
+        flag_country: v.flag_country || '',
+        data_source: v.data_source || '',
+    };
+
+    ships.push(ship);
+    trackedVessels.push({ mmsi: v.mmsi, name: v.name, type: typeKey });
+    buildShipMarkers();
+    document.getElementById('shipCount2').textContent = ships.length;
+}
+
+function flyToVesselPosition(lat, lng, name, event) {
+    if (event) { event.stopPropagation(); event.preventDefault(); }
+    portMap.flyTo([lat, lng], 8, { duration: 1 });
+}
+
+function untrackSelectedShip() {
+    if (!selectedShip || !selectedShip.mmsi) return;
+
+    fetch(`/api/portmap/untrack-vessel/${selectedShip.mmsi}`, { method: 'POST', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' } })
+        .then(r => r.json())
+        .then(() => {
+            trackedVessels = trackedVessels.filter(t => t.mmsi !== selectedShip.mmsi);
+
+            const idx = ships.findIndex(s => s.mmsi === selectedShip.mmsi);
+            if (idx !== -1) {
+                if (ships[idx].marker) { shipLayer.removeLayer(ships[idx].marker); }
+                ships.splice(idx, 1);
+            }
+
+            buildShipMarkers();
+            renderVesselList();
+            closeShipPanel();
+        })
+        .catch(() => {});
+}
+
+function refreshTrackedVessels() {
+    if (trackedVessels.length === 0) return;
+
+    const mmsiList = trackedVessels.map(t => t.mmsi);
+
+    mmsiList.forEach(mmsi => {
+        fetch(`/api/portmap/vessel-position/${mmsi}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.found && data.position) {
+                    const ship = ships.find(s => s.mmsi === mmsi);
+                    if (ship) {
+                        ship.realLat = data.position.latitude;
+                        ship.realLng = data.position.longitude;
+                        ship.speed = data.position.sog || 0;
+                        ship.heading = data.position.heading || data.position.cog || 0;
+                        ship.destination = data.position.destination || '';
+                        ship.nav_status = data.position.nav_status || '';
+                        ship.data_source = data.position.data_source || '';
+                        ship.isLive = true;
+
+                        if (ship.marker) {
+                            ship.marker.setLatLng([ship.realLat, ship.realLng]);
+                            const iconEl = ship.marker.getElement();
+                            if (iconEl) {
+                                const inner = iconEl.querySelector('div');
+                                if (inner) inner.style.transform = `rotate(${ship.heading}deg)`;
+                            }
+                        }
+                    }
+                }
+            })
+            .catch(() => {});
+    });
+}
+
+window.flyToPort = flyToPort;
+window.selectShip = selectShip;
+window.closeShipPanel = closeShipPanel;
+window.toggleFollowShip = toggleFollowShip;
+window.highlightShipRoute = highlightShipRoute;
+window.untrackSelectedShip = untrackSelectedShip;
+
 (function init() {
     if (typeof L === 'undefined') return setTimeout(init, 50);
 
     portMap = L.map('portMap', { zoomControl: true }).setView([20, 30], 2);
+    window._portMap = portMap;
     L.tileLayer(`https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`, {
         tileSize: 512,
         zoomOffset: -1,
@@ -622,11 +869,20 @@ function renderVesselList() {
 
         results.style.display = 'block';
         results.innerHTML = filtered.slice(0, 25).map(p => `
-            <button type="button" class="list-group-item list-group-item-action py-1 px-2" style="font-size:0.85rem;cursor:pointer;"
-                onclick="flyToPort(${p.latitude}, ${p.longitude}, '${p.name.replace(/'/g, "\\'")}')">
+            <button type="button" class="list-group-item list-group-item-action py-1 px-2 port-search-item" style="font-size:0.85rem;cursor:pointer;"
+                data-lat="${p.latitude}" data-lng="${p.longitude}" data-name="${p.name.replace(/"/g, '&quot;')}">
                 ${p.name} <span class="text-muted">(${p.country})</span>
             </button>
         `).join('');
+    });
+
+    document.getElementById('searchResults').addEventListener('click', function (e) {
+        const btn = e.target.closest('.port-search-item');
+        if (!btn) return;
+        const lat = parseFloat(btn.dataset.lat);
+        const lng = parseFloat(btn.dataset.lng);
+        const name = btn.dataset.name;
+        flyToPort(lat, lng, name);
     });
 
     document.getElementById('tab-ports').addEventListener('shown.bs.tab', function () {
@@ -637,12 +893,41 @@ function renderVesselList() {
         renderPortList();
     });
 
+    document.getElementById('portList').addEventListener('click', function (e) {
+        const item = e.target.closest('.port-item');
+        if (!item || !item.dataset.lat) return;
+        flyToPort(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng), item.dataset.name);
+    });
+
     document.getElementById('tab-vessels').addEventListener('shown.bs.tab', function () {
         renderVesselList();
     });
 
     document.getElementById('vesselTypeFilter').addEventListener('change', function () {
         renderVesselList();
+    });
+
+    document.getElementById('vesselSearchInput').addEventListener('input', function () {
+        searchVesselsLocal(this.value);
+    });
+
+    document.getElementById('vesselSearchBtn').addEventListener('click', function () {
+        searchVesselsLocal(document.getElementById('vesselSearchInput').value);
+    });
+
+    document.getElementById('vesselSearchResults').addEventListener('click', function (e) {
+        const trackBtn = e.target.closest('.vessel-track-btn');
+        if (trackBtn) {
+            e.stopPropagation();
+            trackVesselFromSearch(trackBtn.dataset.mmsi, trackBtn.dataset.name);
+            return;
+        }
+        const gotoBtn = e.target.closest('.vessel-goto-btn');
+        if (gotoBtn) {
+            e.stopPropagation();
+            flyToVesselPosition(parseFloat(gotoBtn.dataset.lat), parseFloat(gotoBtn.dataset.lng), gotoBtn.dataset.name);
+            return;
+        }
     });
 
     document.getElementById('refreshVesselsBtn').addEventListener('click', function () {
@@ -696,6 +981,8 @@ function renderVesselList() {
     if (usingLiveData) {
         setInterval(fetchLiveVessels, 60000);
     }
+
+    trackedRefreshInterval = setInterval(refreshTrackedVessels, 30000);
 
     setTimeout(() => portMap.invalidateSize(), 200);
     window.addEventListener('resize', () => portMap.invalidateSize());

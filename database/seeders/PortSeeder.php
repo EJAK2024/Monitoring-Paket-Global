@@ -25,10 +25,18 @@ class PortSeeder extends Seeder
             return;
         }
 
+        $existing = Port::pluck('name')->toArray();
+        $inserted = 0;
+
         foreach ($ports as $port) {
+            if (in_array($port['name'], $existing)) {
+                continue;
+            }
             Port::create($port);
+            $existing[] = $port['name'];
+            $inserted++;
         }
 
-        $this->command->info('Imported '.count($ports).' ports from World Port Index');
+        $this->command->info("Imported {$inserted} new ports (skipped ".(count($ports) - $inserted)." duplicates)");
     }
 }

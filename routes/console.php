@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('countries:fetch-all')->weekly()->sundays()->at('02:00');
 Schedule::command('wpi:import')->monthly()->sundays()->at('03:00');
+Schedule::command('aisstream:refresh')->everyMinute();

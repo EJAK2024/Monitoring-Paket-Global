@@ -52,5 +52,32 @@
         </div>
     </div>
     @yield('scripts')
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    console.log('SW registered:', reg.scope);
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'activated') {
+                                window.location.reload();
+                            }
+                        });
+                    });
+                }).catch((err) => {
+                    console.log('SW registration failed:', err);
+                });
+
+                let refreshing = false;
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing) {
+                        refreshing = true;
+                        window.location.reload();
+                    }
+                });
+            });
+        }
+    </script>
 </body>
 </html>

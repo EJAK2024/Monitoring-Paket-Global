@@ -1,6 +1,7 @@
 *.log
 .DS_Store
 .env
+.gitignore
 AGENTS.md
 .env.backup
 .editorconfig

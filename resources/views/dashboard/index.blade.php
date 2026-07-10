@@ -112,10 +112,10 @@
         </div>
     </div>
 
-    {{-- Section 3b: Weather Map --}}
+    {{-- Section 3b: Location & Ports Map --}}
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <span><i class="bi bi-cloud-sun me-1"></i> Weather Monitoring Map</span>
+            <span><i class="bi bi-geo-alt me-1"></i> Country & Port Map</span>
             <small class="text-muted" id="dash_weatherMapLabel">Select a country</small>
         </div>
         <div class="card-body p-0 position-relative">

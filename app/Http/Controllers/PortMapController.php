@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Contracts\VesselTrackingInterface;
 use App\Models\Port;
-use App\Services\VesselApiService;
+use App\Models\Vessel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -12,7 +13,7 @@ use Illuminate\View\View;
 
 class PortMapController extends Controller
 {
-    public function index(VesselApiService $vesselApi): View
+    public function index(VesselTrackingInterface $vesselApi): View
     {
         $routeDefs = [
             ['name' => 'Asia-Europe Express', 'type' => 'container', 'ships' => 6, 'ports' => ['Port of Shanghai', 'Port of Singapore', 'Port of Colombo', 'Port of Dubai', 'Port of Rotterdam']],
@@ -62,33 +63,26 @@ class PortMapController extends Controller
         try {
             if ($vesselApi->isKeyValid()) {
                 $apiStatus = 'active';
-                $mmsiList = Cache::remember('vesselapi.tracked_mmsi', 3600, function () use ($vesselApi) {
-                    $vessels = $vesselApi->searchVessels('MAERSK', 15);
+                $cached = Cache::get('aisstream.live_vessels', []);
 
-                    return collect($vessels)->pluck('mmsi')->take(10)->toArray();
-                });
-
-                if (! empty($mmsiList)) {
-                    $positions = $vesselApi->getMultiplePositions($mmsiList);
-                    $liveVessels = collect($positions)->map(function ($pos) {
-                        return [
-                            'mmsi' => $pos['mmsi'] ?? '',
-                            'name' => $pos['vessel_name'] ?? 'Unknown',
-                            'latitude' => $pos['latitude'] ?? null,
-                            'longitude' => $pos['longitude'] ?? null,
-                            'speed' => $pos['sog'] ?? 0,
-                            'heading' => $pos['cog'] ?? ($pos['heading'] ?? 0),
-                            'destination' => '',
-                            'status' => $pos['nav_status'] ?? 0,
-                        ];
-                    })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
-                }
+                $liveVessels = collect($cached)->map(function ($pos) {
+                    return [
+                        'mmsi' => $pos['mmsi'] ?? '',
+                        'name' => $pos['vessel_name'] ?? 'Unknown',
+                        'latitude' => $pos['latitude'] ?? null,
+                        'longitude' => $pos['longitude'] ?? null,
+                        'speed' => $pos['sog'] ?? 0,
+                        'heading' => $pos['cog'] ?? ($pos['heading'] ?? 0),
+                        'destination' => $pos['destination'] ?? '',
+                        'status' => $pos['nav_status'] ?? '',
+                    ];
+                })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
             } else {
                 $apiStatus = 'invalid_key';
             }
         } catch (\Exception $e) {
             $apiStatus = 'error';
-            Log::warning('VesselAPI fetch failed, using simulation: '.$e->getMessage());
+            Log::warning('AISStream fetch failed, using simulation: '.$e->getMessage());
         }
 
         return view('portmap.index', [
@@ -145,36 +139,29 @@ class PortMapController extends Controller
         return response()->json($data);
     }
 
-    public function vessels(VesselApiService $vesselApi): JsonResponse
+    public function vessels(VesselTrackingInterface $vesselApi): JsonResponse
     {
         $liveVessels = [];
 
         try {
             if ($vesselApi->isKeyValid()) {
-                $mmsiList = Cache::remember('vesselapi.tracked_mmsi', 3600, function () use ($vesselApi) {
-                    $vessels = $vesselApi->searchVessels('MAERSK', 15);
+                $cached = Cache::get('aisstream.live_vessels', []);
 
-                    return collect($vessels)->pluck('mmsi')->take(10)->toArray();
-                });
-
-                if (! empty($mmsiList)) {
-                    $positions = $vesselApi->getMultiplePositions($mmsiList);
-                    $liveVessels = collect($positions)->map(function ($pos) {
-                        return [
-                            'mmsi' => $pos['mmsi'] ?? '',
-                            'name' => $pos['vessel_name'] ?? 'Unknown',
-                            'latitude' => $pos['latitude'] ?? null,
-                            'longitude' => $pos['longitude'] ?? null,
-                            'speed' => $pos['sog'] ?? 0,
-                            'heading' => $pos['cog'] ?? ($pos['heading'] ?? 0),
-                            'destination' => '',
-                            'status' => $pos['nav_status'] ?? 0,
-                        ];
-                    })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
-                }
+                $liveVessels = collect($cached)->map(function ($pos) {
+                    return [
+                        'mmsi' => $pos['mmsi'] ?? '',
+                        'name' => $pos['vessel_name'] ?? 'Unknown',
+                        'latitude' => $pos['latitude'] ?? null,
+                        'longitude' => $pos['longitude'] ?? null,
+                        'speed' => $pos['sog'] ?? 0,
+                        'heading' => $pos['cog'] ?? ($pos['heading'] ?? 0),
+                        'destination' => $pos['destination'] ?? '',
+                        'status' => $pos['nav_status'] ?? '',
+                    ];
+                })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
             }
         } catch (\Exception $e) {
-            Log::warning('VesselAPI vessels endpoint failed: '.$e->getMessage());
+            Log::warning('AISStream vessels endpoint failed: '.$e->getMessage());
         }
 
         return response()->json([
@@ -182,5 +169,151 @@ class PortMapController extends Controller
             'using_live_data' => ! empty($liveVessels),
             'timestamp' => now()->toIso8601String(),
         ]);
+    }
+
+    public function searchVessels(Request $request): JsonResponse
+    {
+        $query = $request->get('q', '');
+        $limit = min((int) $request->get('limit', 20), 50);
+
+        if (strlen($query) < 2) {
+            return response()->json(['results' => []]);
+        }
+
+        $cacheKey = 'portmap.vessel_search.'.md5($query.$limit);
+
+        $results = Cache::remember($cacheKey, 120, function () use ($query, $limit) {
+            return Vessel::search($query)
+                ->select(['id', 'mmsi', 'imo', 'name', 'vessel_type', 'flag_country', 'flag_code', 'latitude', 'longitude'])
+                ->limit($limit)
+                ->get()
+                ->toArray();
+        });
+
+        return response()->json(['results' => $results]);
+    }
+
+    public function trackVessel(string $mmsi, VesselTrackingInterface $vesselApi): JsonResponse
+    {
+        $vessel = Vessel::where('mmsi', $mmsi)->first();
+
+        if (! $vessel) {
+            return response()->json(['error' => 'Vessel not found in database'], 404);
+        }
+
+        try {
+            $position = $vesselApi->getVesselPosition($mmsi);
+
+            if ($position) {
+                $vessel->update([
+                    'latitude' => $position['latitude'],
+                    'longitude' => $position['longitude'],
+                    'speed' => $position['sog'] ?? 0,
+                    'course' => $position['cog'] ?? 0,
+                    'heading' => $position['heading'] ?? 0,
+                    'destination' => $position['destination'] ?? '',
+                    'nav_status' => $position['nav_status'] ?? 'Unknown',
+                    'is_tracked' => true,
+                    'last_updated' => now(),
+                ]);
+
+                return response()->json([
+                    'success' => true,
+                    'vessel' => [
+                        'mmsi' => $vessel->mmsi,
+                        'imo' => $vessel->imo,
+                        'name' => $vessel->name,
+                        'vessel_type' => $vessel->vessel_type,
+                        'flag_country' => $vessel->flag_country,
+                        'latitude' => $vessel->latitude,
+                        'longitude' => $vessel->longitude,
+                        'speed' => $vessel->speed,
+                        'heading' => $vessel->heading,
+                        'destination' => $vessel->destination,
+                        'nav_status' => $vessel->nav_status,
+                        'data_source' => $position['data_source'] ?? 'AIS',
+                    ],
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning("Failed to track vessel {$mmsi}: ".$e->getMessage());
+        }
+
+        $vessel->update(['is_tracked' => true]);
+
+        return response()->json([
+            'success' => true,
+            'vessel' => [
+                'mmsi' => $vessel->mmsi,
+                'imo' => $vessel->imo,
+                'name' => $vessel->name,
+                'vessel_type' => $vessel->vessel_type,
+                'flag_country' => $vessel->flag_country,
+                'latitude' => $vessel->latitude,
+                'longitude' => $vessel->longitude,
+                'speed' => $vessel->speed,
+                'heading' => $vessel->heading,
+                'destination' => $vessel->destination,
+                'nav_status' => $vessel->nav_status,
+                'data_source' => 'database',
+            ],
+        ]);
+    }
+
+    public function vesselPosition(string $mmsi, VesselTrackingInterface $vesselApi): JsonResponse
+    {
+        try {
+            $position = $vesselApi->getVesselPosition($mmsi);
+
+            if ($position) {
+                Vessel::where('mmsi', $mmsi)->update([
+                    'latitude' => $position['latitude'],
+                    'longitude' => $position['longitude'],
+                    'speed' => $position['sog'] ?? 0,
+                    'course' => $position['cog'] ?? 0,
+                    'heading' => $position['heading'] ?? 0,
+                    'destination' => $position['destination'] ?? '',
+                    'nav_status' => $position['nav_status'] ?? 'Unknown',
+                    'last_updated' => now(),
+                ]);
+
+                return response()->json([
+                    'found' => true,
+                    'position' => $position,
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::warning("Position fetch failed for {$mmsi}: ".$e->getMessage());
+        }
+
+        $vessel = Vessel::where('mmsi', $mmsi)->first();
+
+        if ($vessel && $vessel->latitude && $vessel->longitude) {
+            return response()->json([
+                'found' => true,
+                'position' => [
+                    'mmsi' => $vessel->mmsi,
+                    'imo' => $vessel->imo,
+                    'vessel_name' => $vessel->name,
+                    'latitude' => (float) $vessel->latitude,
+                    'longitude' => (float) $vessel->longitude,
+                    'sog' => (float) $vessel->speed,
+                    'cog' => (float) $vessel->course,
+                    'heading' => (float) $vessel->heading,
+                    'nav_status' => $vessel->nav_status,
+                    'destination' => $vessel->destination,
+                    'data_source' => 'database',
+                ],
+            ]);
+        }
+
+        return response()->json(['found' => false]);
+    }
+
+    public function untrackVessel(string $mmsi): JsonResponse
+    {
+        Vessel::where('mmsi', $mmsi)->update(['is_tracked' => false]);
+
+        return response()->json(['success' => true]);
     }
 }

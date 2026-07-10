@@ -47,9 +47,16 @@ return [
         'key' => env('GNEWS_API_KEY'),
     ],
 
-    'vesselapi' => [
-        'key' => env('VESSELAPI_API_KEY'),
-        'url' => env('VESSELAPI_API_URL', 'https://api.vesselapi.com/v1'),
+    'aisstream' => [
+        'key' => env('AISSTREAM_API_KEY'),
+    ],
+
+    'vesselfinder' => [
+        'key' => env('VESSELFINDER_API_KEY'),
+    ],
+
+    'datadocked' => [
+        'key' => env('DATA_DOCKED_API_KEY'),
     ],
 
     'restcountries' => [
