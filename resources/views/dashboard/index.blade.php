@@ -23,27 +23,31 @@
     {{-- Section 1: Economic Indicators --}}
     <div class="row g-3 mb-4" id="statCards">
         <div class="col-md-3">
-            <div class="card stat-card">
+            <div class="card stat-card" data-aos="fade-up" data-aos-delay="0">
                 <div class="stat-label">GDP (USD B)</div>
                 <div class="stat-value" id="dash_gdp">-</div>
+                <div class="stat-loader" id="dash_gdpLoader"><div class="bar-loader"></div></div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card stat-card">
+            <div class="card stat-card" data-aos="fade-up" data-aos-delay="100">
                 <div class="stat-label">Inflation (%)</div>
                 <div class="stat-value" id="dash_inflation">-</div>
+                <div class="stat-loader" id="dash_inflationLoader"><div class="bar-loader"></div></div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card stat-card">
+            <div class="card stat-card" data-aos="fade-up" data-aos-delay="200">
                 <div class="stat-label">Population</div>
                 <div class="stat-value" id="dash_population">-</div>
+                <div class="stat-loader" id="dash_populationLoader"><div class="bar-loader"></div></div>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card stat-card">
+            <div class="card stat-card" data-aos="fade-up" data-aos-delay="300">
                 <div class="stat-label">Currency</div>
                 <div class="stat-value" id="dash_currency">-</div>
+                <div class="stat-loader" id="dash_currencyLoader"><div class="bar-loader"></div></div>
             </div>
         </div>
     </div>
@@ -51,7 +55,7 @@
     <div class="row g-3 mb-4">
         {{-- Section 2: Risk Score Engine --}}
         <div class="col-md-6">
-            <div class="card h-100">
+            <div class="card h-100" data-aos="fade-right">
                 <div class="card-header d-flex align-items-center gap-2">
                     <span>Risk Score Engine</span>
                     <span class="badge bg-secondary" id="dash_riskLevelBadge">-</span>
@@ -103,7 +107,7 @@
 
         {{-- Section 3: Current Weather --}}
         <div class="col-md-6">
-            <div class="card h-100">
+            <div class="card h-100" data-aos="fade-left">
                 <div class="card-header">Current Weather</div>
                 <div class="card-body" id="dash_weatherData">
                     <p class="text-muted mb-0">Select a country to see weather data.</p>
@@ -113,13 +117,16 @@
     </div>
 
     {{-- Section 3b: Location & Ports Map --}}
-    <div class="card mb-4">
+    <div class="card mb-4" data-aos="fade-up">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span><i class="bi bi-geo-alt me-1"></i> Country & Port Map</span>
-            <small class="text-muted" id="dash_weatherMapLabel">Select a country</small>
+            <small class="text-muted" id="dash_mapLabel">Select a country</small>
         </div>
         <div class="card-body p-0 position-relative">
-            <div id="dash_weatherMap" style="height: 420px;"></div>
+            <div id="dash_mapLoader" class="map-loader-overlay">
+                <div class="map-loader"></div>
+            </div>
+            <div id="dash_countryMap" style="height: 420px;"></div>
         </div>
     </div>
 
@@ -128,7 +135,7 @@
     {{-- Section 4: Currency Impact --}}
     <div class="row g-3 mb-4">
         <div class="col-md-8">
-            <div class="card">
+            <div class="card" data-aos="fade-right">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Currency Impact Dashboard</span>
                     <div>
@@ -151,7 +158,7 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card">
+            <div class="card" data-aos="fade-left">
                 <div class="card-header">Exchange Rate Table</div>
                 <div class="card-body" id="dash_rateTable">
                     <p class="text-muted mb-0">Loading rates...</p>
@@ -165,7 +172,7 @@
     {{-- Section 5: News Intelligence --}}
     <div class="row g-3 mb-4">
         <div class="col-12">
-            <div class="card">
+            <div class="card" data-aos="fade-up">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>News Intelligence</span>
                     <div class="d-flex gap-2">
@@ -225,7 +232,7 @@
     {{-- Section 7: Data Visualization --}}
     <div class="row g-3 mb-4">
         <div class="col-md-6">
-            <div class="card">
+            <div class="card" data-aos="zoom-in" data-aos-delay="0">
                 <div class="card-header">Economic Profile (Radar)</div>
                 <div class="card-body">
                     <canvas id="dash_econRadar" height="220"></canvas>
@@ -233,7 +240,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card">
+            <div class="card" data-aos="zoom-in" data-aos-delay="100">
                 <div class="card-header">GDP · Exports · Imports</div>
                 <div class="card-body">
                     <canvas id="dash_tradeChart" height="220"></canvas>
@@ -244,7 +251,7 @@
 
     <div class="row g-3 mb-4">
         <div class="col-md-6">
-            <div class="card">
+            <div class="card" data-aos="zoom-in" data-aos-delay="0">
                 <div class="card-header">Risk Component Breakdown</div>
                 <div class="card-body">
                     <canvas id="dash_riskPie" height="220"></canvas>
@@ -252,7 +259,7 @@
             </div>
         </div>
         <div class="col-md-6">
-            <div class="card">
+            <div class="card" data-aos="zoom-in" data-aos-delay="100">
                 <div class="card-header">Inflation vs GDP</div>
                 <div class="card-body">
                     <canvas id="dash_dualChart" height="220"></canvas>
@@ -264,7 +271,7 @@
     <hr class="my-4">
 
     {{-- Section 8: Country Comparison --}}
-    <div class="card mb-4">
+    <div class="card mb-4" data-aos="fade-up">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Country Comparison Engine</span>
             <div>
@@ -285,7 +292,7 @@
     <hr class="my-4">
 
     {{-- Section 9: Watchlist --}}
-    <div class="card mb-4">
+    <div class="card mb-4" data-aos="fade-up">
         <div class="card-header d-flex justify-content-between align-items-center">
             <span>Favorite Monitoring List</span>
             <button class="btn btn-sm btn-outline-warning" id="dash_watchlistBtn" onclick="dash_toggleWatchlist()">

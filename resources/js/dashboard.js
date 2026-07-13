@@ -3,8 +3,8 @@ let dash_selectedId = null;
 let dash_selectedName = '';
 let dash_countryData = null;
 
-let dash_weatherMap = null;
-let dash_weatherMarkers = [];
+let dash_map = null;
+let dash_mapMarkers = [];
 
 let dash_currencyChart = null;
 let dash_econRadar = null;
@@ -12,21 +12,21 @@ let dash_tradeChart = null;
 let dash_riskPie = null;
 let dash_dualChart = null;
 
-function dash_initWeatherMap() {
-    if (dash_weatherMap) return;
-    dash_weatherMap = L.map('dash_weatherMap', {
+function dash_initMap() {
+    if (dash_map) return;
+    dash_map = L.map('dash_countryMap', {
         zoomControl: true,
         attributionControl: true,
     }).setView([20, 0], 2);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    }).addTo(dash_weatherMap);
+    }).addTo(dash_map);
 }
 
 function dash_invalidateMaps() {
     setTimeout(function () {
-        if (dash_weatherMap) dash_weatherMap.invalidateSize();
+        if (dash_map) dash_map.invalidateSize();
     }, 150);
 }
 
@@ -50,7 +50,7 @@ document.getElementById('countrySelect').addEventListener('change', function () 
     document.getElementById('noSelection').style.display = 'none';
     document.getElementById('countryData').style.display = '';
     document.getElementById('countryDataExtras').style.display = '';
-    dash_initWeatherMap();
+    dash_initMap();
     dash_invalidateMaps();
     dash_loadCountry(dash_selectedId);
 });
@@ -67,7 +67,24 @@ function dash_loadCountry(id) {
         dash_renderCharts(dbCountry);
     }
 
+    document.getElementById('dash_gdp').textContent = '';
+    document.getElementById('dash_inflation').textContent = '';
+    document.getElementById('dash_population').textContent = '';
+    document.getElementById('dash_currency').textContent = '';
+    document.getElementById('dash_gdpLoader').classList.add('active');
+    document.getElementById('dash_inflationLoader').classList.add('active');
+    document.getElementById('dash_populationLoader').classList.add('active');
+    document.getElementById('dash_currencyLoader').classList.add('active');
     document.getElementById('dash_riskScore').textContent = 'Loading...';
+    document.getElementById('dash_riskLabel').textContent = 'Waiting...';
+    document.getElementById('dash_riskBar').style.width = '0%';
+    document.getElementById('dash_riskLevelBadge').textContent = '-';
+    document.getElementById('dash_riskLevelBadge').className = 'badge bg-secondary';
+    document.getElementById('dash_rWeather').textContent = '-';
+    document.getElementById('dash_rInflation').textContent = '-';
+    document.getElementById('dash_rNews').textContent = '-';
+    document.getElementById('dash_rCurrency').textContent = '-';
+    document.getElementById('dash_weatherData').innerHTML = '<p class="text-muted mb-0">Loading weather data...</p>';
 
     fetch(`/api/countries/${id}`)
         .then(r => r.json())
@@ -78,11 +95,13 @@ function dash_loadCountry(id) {
             dash_renderCharts(country);
 
             const name = country.name;
-            dash_fetchWeatherMap(country.name, country.iso_code);
+            dash_fetchMapData(country.name, country.iso_code);
             dash_loadNews(name);
             dash_updateWatchlistBtn();
         })
-        .catch(() => {});
+        .catch(() => {
+            document.getElementById('dash_weatherData').innerHTML = '<p class="text-danger mb-0">Failed to load weather data.</p>';
+        });
 
     fetch(`/api/risk?country_id=${id}`)
         .then(r => r.json())
@@ -100,6 +119,10 @@ function dash_renderStats(c) {
     document.getElementById('dash_inflation').textContent = c.inflation != null ? c.inflation + '%' : '-';
     document.getElementById('dash_population').textContent = c.population?.toLocaleString() ?? '-';
     document.getElementById('dash_currency').textContent = c.currency_code ?? '-';
+    document.getElementById('dash_gdpLoader').classList.remove('active');
+    document.getElementById('dash_inflationLoader').classList.remove('active');
+    document.getElementById('dash_populationLoader').classList.remove('active');
+    document.getElementById('dash_currencyLoader').classList.remove('active');
 }
 
 function dash_renderRisk(country, risks) {
@@ -173,7 +196,7 @@ function dash_stormRisk(code, wind) {
 }
 
 var dash_countryCoords = {
-    DE:[51.1657,10.4515],CN:[35.8617,104.1954],ID:[-0.7893,113.9213],AU:[-25.2744,133.7751],
+    AF:[33.9391,67.7100],DE:[51.1657,10.4515],CN:[35.8617,104.1954],ID:[-0.7893,113.9213],AU:[-25.2744,133.7751],
     US:[37.0902,-95.7129],JP:[36.2048,138.2529],SG:[1.3521,103.8198],MY:[4.2105,101.9753],
     GB:[55.3781,-3.4360],IN:[20.5937,78.9629],TH:[15.8700,100.9925],VN:[14.0583,108.2772],
     PH:[12.8797,121.7740],KR:[35.9078,127.7669],TW:[23.6978,120.9605],HK:[22.3193,114.1694],
@@ -190,41 +213,41 @@ var dash_countryCoords = {
     FJ:[-17.7134,178.0650],DZ:[28.0339,1.6596],TN:[33.8869,9.5375],LY:[26.3351,17.2283],
     LB:[33.8547,35.8623],IL:[31.0461,34.8516],JO:[30.5852,36.2384],SY:[34.8021,38.9968],
     BH:[26.0667,50.5577],FK:[-51.7963,-59.5236],CK:[-21.2098,-159.7804],TO:[-21.1790,-175.1982],
-    WS:[-13.7590,-172.1046],FJ:[-17.7134,178.0650],PG:[-6.3150,143.9555],MN:[46.8625,103.8467],
-    MM:[21.9162,95.9560],KH:[12.5657,104.9910],LA:[19.8567,102.4955],NP:[28.3949,84.1240],
-    BD:[23.6850,90.3563],BT:[27.5142,90.4336],MV:[3.2028,73.2207],BN:[4.5353,114.7277],
+    WS:[-13.7590,-172.1046],PG:[-6.3150,143.9555],MN:[46.8625,103.8467],
+    KH:[12.5657,104.9910],LA:[19.8567,102.4955],NP:[28.3949,84.1240],
+    BT:[27.5142,90.4336],MV:[3.2028,73.2207],BN:[4.5353,114.7277],
     TL:[-8.8742,125.7275],MG:[-18.7669,46.8691],MU:[-20.3484,57.5522],SC:[-4.6796,55.4920],
     MZ:[-18.6657,35.5296],AO:[-11.2027,17.8739],CM:[7.3697,12.3547],GA:[-0.8037,11.6094],
     SN:[14.4974,-14.4524],GN:[9.9456,-9.6966],SL:[8.4606,-11.7799],LR:[6.4281,-9.4295],
     CF:[6.6111,20.9394],TD:[15.4542,18.7322],NE:[17.6078,8.0817],ML:[17.5707,-3.9961],
-    BF:[12.3714,-1.5197],MZ:[-18.6657,35.5296],ZM:[-13.1339,28.6387],ZW:[-19.0154,29.1549],
+    BF:[12.3714,-1.5197],ZM:[-13.1339,28.6387],ZW:[-19.0154,29.1549],
     BW:[-22.3285,24.6849],NA:[-22.9576,18.4904],SZ:[-26.5225,31.4659],LS:[-29.6100,28.2336],
     UG:[1.3733,32.2903],RW:[-1.9403,29.8739],BI:[-3.3731,29.9189],ET:[9.1450,40.4897],
     SO:[5.1521,46.1996],DJ:[11.8251,42.5903],ER:[15.1794,39.7823],SS:[6.8770,31.3070],
-    SD:[12.8628,30.2176],TD:[15.4542,18.7322],CG:[-0.2280,15.8277],GQ:[1.6508,10.2679],
-    GA:[-0.8037,11.6094],ST:[0.1864,6.6131],CV:[16.5388,-23.0418],GM:[13.4432,-15.3101],
-    GW:[11.8037,-15.1804],TG:[8.6195,1.2080],BJ:[9.3077,2.3158],SO:[5.1521,46.1996],
+    SD:[12.8628,30.2176],CG:[-0.2280,15.8277],GQ:[1.6508,10.2679],
+    ST:[0.1864,6.6131],CV:[16.5388,-23.0418],GM:[13.4432,-15.3101],
+    GW:[11.8037,-15.1804],TG:[8.6195,1.2080],BJ:[9.3077,2.3158],
     MR:[21.0079,-10.9408],KM:[-11.6455,43.3333],MW:[-13.2543,34.3015],
-    MY:[4.2105,101.9753],BN:[4.5353,114.7277],TL:[-8.8742,125.7275],
     CU:[21.5218,-77.7812],JM:[18.1096,-77.2975],BS:[25.0343,-77.3963],BB:[13.1939,-59.5432],
     TT:[10.6918,-61.2225],GY:[4.8604,-58.9302],SR:[3.9193,-56.0278],HT:[18.9712,-72.2852],
     DO:[18.7357,-70.1627],PR:[18.2208,-66.5901],VE:[6.4238,-66.5897],EC:[-1.8312,-78.1834],
     BO:[-16.2902,-63.5887],PY:[-23.4425,-58.4438],UY:[-32.5228,-55.7658],GF:[4.9429,-52.2330],
-    FK:[-51.7963,-59.5236],GI:[36.1408,-5.3536],AD:[42.5063,1.5218],MC:[43.7384,7.4246],
+    GI:[36.1408,-5.3536],AD:[42.5063,1.5218],MC:[43.7384,7.4246],
     LI:[47.1660,9.5554],SM:[43.9424,12.4578],VA:[41.9029,12.4534],MT:[35.9375,14.3754],
     CY:[35.1264,33.4299],IS:[64.9631,-19.0208],NO:[60.4720,8.4689],FI:[61.9241,25.7482],
     DK:[56.2639,9.5018],EE:[58.5953,25.0136],LV:[56.8796,24.6032],LT:[55.1694,23.8813],
     BY:[53.7098,27.9534],MD:[47.4116,28.3699],AL:[41.1533,20.1683],BA:[43.9159,17.6791],
     ME:[42.7087,19.3744],RS:[44.0165,21.0059],MK:[41.5122,21.7453],XK:[42.6026,20.9020],
-    CU:[21.5218,-77.7812],JM:[18.1096,-77.2975],BS:[25.0343,-77.3963],
-    GH:[7.9465,-1.0232],LR:[6.4281,-9.4295],TG:[8.6195,1.2080]
+    AT:[47.5162,14.5501],IE:[53.1424,-7.6921],KZ:[48.0196,66.9237],NZ:[-40.9006,174.8860],
+    AQ:[-82.8628,135.0]
 };
 
-function dash_fetchWeatherMap(countryName, countryCode) {
-    document.getElementById('dash_weatherMapLabel').textContent = `Loading map for ${countryName}...`;
+function dash_fetchMapData(countryName, countryCode) {
+    document.getElementById('dash_mapLabel').textContent = `Loading map for ${countryName}...`;
+    document.getElementById('dash_mapLoader').classList.remove('hidden');
 
-    dash_weatherMarkers.forEach(m => dash_weatherMap.removeLayer(m));
-    dash_weatherMarkers = [];
+    dash_mapMarkers.forEach(m => dash_map.removeLayer(m));
+    dash_mapMarkers = [];
 
     var coords = dash_countryCoords[countryCode] || null;
 
@@ -234,7 +257,8 @@ function dash_fetchWeatherMap(countryName, countryCode) {
 
     portsPromise.then(ports => {
         if (!coords && !ports.length) {
-            document.getElementById('dash_weatherMapLabel').textContent = 'No data found.';
+            document.getElementById('dash_mapLabel').textContent = 'No data found.';
+            document.getElementById('dash_mapLoader').classList.add('hidden');
             return;
         }
 
@@ -250,7 +274,7 @@ function dash_fetchWeatherMap(countryName, countryCode) {
             });
 
             const countryMarker = L.marker(coords, { icon: countryIcon })
-                .addTo(dash_weatherMap)
+                .addTo(dash_map)
                 .bindPopup(`<strong>📍 ${countryName}</strong>`, { maxWidth: 200 });
             allMarkers.push(countryMarker);
         }
@@ -266,22 +290,25 @@ function dash_fetchWeatherMap(countryName, countryCode) {
 
             ports.forEach(p => {
                 const pm = L.marker([p.latitude, p.longitude], { icon: portIcon })
-                    .addTo(dash_weatherMap)
+                    .addTo(dash_map)
                     .bindPopup(`<strong>⚓ ${p.name}</strong><br><small>${p.country} &middot; ${p.port_type || 'N/A'}</small>`, { maxWidth: 200 });
                 allMarkers.push(pm);
             });
         }
 
         if (allMarkers.length > 0) {
-            dash_weatherMarkers = allMarkers;
+            dash_mapMarkers = allMarkers;
             const group = L.featureGroup(allMarkers);
-            dash_weatherMap.fitBounds(group.getBounds().pad(0.3));
+            dash_map.fitBounds(group.getBounds().pad(0.3));
         }
 
         const portLabel = ports.length > 0 ? ` · ${ports.length} ports` : '';
-        document.getElementById('dash_weatherMapLabel').textContent = `${countryName}${portLabel}`;
+        document.getElementById('dash_mapLabel').textContent = `${countryName}${portLabel}`;
+        document.getElementById('dash_mapLoader').classList.add('hidden');
+        setTimeout(() => dash_map.invalidateSize(), 100);
     }).catch(() => {
-        document.getElementById('dash_weatherMapLabel').textContent = 'Map data unavailable.';
+        document.getElementById('dash_mapLabel').textContent = 'Map data unavailable.';
+        document.getElementById('dash_mapLoader').classList.add('hidden');
     });
 }
 
@@ -555,75 +582,101 @@ async function dash_renderComparison() {
     });
 }
 
-function dash_getWatchlist() {
-    return JSON.parse(localStorage.getItem('watchlist') || '[]');
-}
-
-function dash_saveWatchlist(ids) {
-    localStorage.setItem('watchlist', JSON.stringify(ids));
+function dash_getWatchlistIds() {
+    return fetch('/api/watchlist')
+        .then(r => r.json())
+        .then(items => items.map(c => c.id))
+        .catch(() => []);
 }
 
 function dash_toggleWatchlist() {
     if (!dash_selectedId) return;
-    let ids = dash_getWatchlist();
-    const idx = ids.indexOf(dash_selectedId);
-    if (idx > -1) {
-        ids.splice(idx, 1);
-    } else {
-        ids.push(dash_selectedId);
-    }
-    dash_saveWatchlist(ids);
-    dash_updateWatchlistBtn();
-    dash_renderWatchlist();
+    const token = document.querySelector('meta[name="csrf-token"]').content;
+
+    dash_getWatchlistIds().then(ids => {
+        const isIn = ids.includes(dash_selectedId);
+        const url = `/api/watchlist/${dash_selectedId}`;
+        const method = isIn ? 'DELETE' : 'POST';
+        const body = isIn ? null : JSON.stringify({ country_id: dash_selectedId });
+
+        fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': token,
+                'Accept': 'application/json',
+            },
+            body,
+        })
+            .then(() => {
+                dash_updateWatchlistBtn();
+                dash_renderWatchlist();
+            })
+            .catch(() => {});
+    });
 }
 
 function dash_updateWatchlistBtn() {
     if (!dash_selectedId) return;
-    const ids = dash_getWatchlist();
-    const btn = document.getElementById('dash_watchlistBtn');
-    if (ids.includes(dash_selectedId)) {
-        btn.innerHTML = '<i class="bi bi-star-fill text-warning"></i> Remove from Watchlist';
-        btn.className = 'btn btn-sm btn-outline-danger';
-    } else {
-        btn.innerHTML = '<i class="bi bi-star"></i> Add to Watchlist';
-        btn.className = 'btn btn-sm btn-outline-warning';
-    }
+    dash_getWatchlistIds().then(ids => {
+        const btn = document.getElementById('dash_watchlistBtn');
+        if (ids.includes(dash_selectedId)) {
+            btn.innerHTML = '<i class="bi bi-star-fill text-warning"></i> Remove from Watchlist';
+            btn.className = 'btn btn-sm btn-outline-danger';
+        } else {
+            btn.innerHTML = '<i class="bi bi-star"></i> Add to Watchlist';
+            btn.className = 'btn btn-sm btn-outline-warning';
+        }
+    });
 }
 
 function dash_renderWatchlist() {
-    const ids = dash_getWatchlist();
     const container = document.getElementById('dash_watchlistContainer');
 
-    if (ids.length === 0) {
-        container.innerHTML = '<p class="text-muted mb-0">No countries in your watchlist. Add the current country using the button above!</p>';
-        return;
-    }
+    fetch('/api/watchlist')
+        .then(r => r.json())
+        .then(watched => {
+            if (!Array.isArray(watched) || watched.length === 0) {
+                container.innerHTML = '<p class="text-muted mb-0">No countries in your watchlist. Add the current country using the button above!</p>';
+                return;
+            }
 
-    const watched = dash_allCountries.filter(c => ids.includes(c.id));
-    let html = '<div class="row g-2">';
-    watched.forEach(c => {
-        html += `<div class="col-md-4 col-lg-3">
-            <div class="card">
-                <div class="card-body py-2 px-3">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <strong class="small">${c.name}</strong>
-                        <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="dash_removeWatchlist(${c.id})">&times;</button>
+            let html = '<div class="row g-2">';
+            watched.forEach(c => {
+                html += `<div class="col-md-4 col-lg-3">
+                    <div class="card">
+                        <div class="card-body py-2 px-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="small">${c.name}</strong>
+                                <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="dash_removeWatchlist(${c.id})">&times;</button>
+                            </div>
+                            <small class="text-muted">GDP: ${c.gdp?.toLocaleString() ?? '-'}B | Inf: ${c.inflation ?? '-'}%</small>
+                        </div>
                     </div>
-                    <small class="text-muted">GDP: ${c.gdp?.toLocaleString() ?? '-'}B | Inf: ${c.inflation ?? '-'}%</small>
-                </div>
-            </div>
-        </div>`;
-    });
-    html += '</div>';
-    container.innerHTML = html;
+                </div>`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        })
+        .catch(() => {
+            container.innerHTML = '<p class="text-danger mb-0">Failed to load watchlist.</p>';
+        });
 }
 
 function dash_removeWatchlist(id) {
-    let ids = dash_getWatchlist();
-    ids = ids.filter(i => i !== id);
-    dash_saveWatchlist(ids);
-    dash_updateWatchlistBtn();
-    dash_renderWatchlist();
+    const token = document.querySelector('meta[name="csrf-token"]').content;
+    fetch(`/api/watchlist/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'X-CSRF-TOKEN': token,
+            'Accept': 'application/json',
+        },
+    })
+        .then(() => {
+            dash_updateWatchlistBtn();
+            dash_renderWatchlist();
+        })
+        .catch(() => {});
 }
 
 document.addEventListener('DOMContentLoaded', dash_renderWatchlist);

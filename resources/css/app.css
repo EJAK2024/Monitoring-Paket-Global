@@ -3,3 +3,439 @@
 @import 'leaflet/dist/leaflet.css';
 @import 'leaflet.markercluster/dist/MarkerCluster.css';
 @import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+@import 'aos/dist/aos.css';
+
+/* ═══════════════════════════════════════════
+   LIQUID GLASS THEME — Glassmorphism + Animated Gradient
+   ═══════════════════════════════════════════ */
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-hover: rgba(255, 255, 255, 0.09);
+  --glass-bg-strong: rgba(255, 255, 255, 0.11);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-border-hover: rgba(255, 255, 255, 0.18);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --accent-purple: #7c3aed;
+  --accent-cyan: #06b6d4;
+  --accent-gradient: linear-gradient(135deg, #7c3aed, #06b6d4);
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+}
+
+/* ─── Animated Liquid Background ─── */
+body {
+  background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #1a1a3e) fixed !important;
+  background-size: 400% 400% !important;
+  animation: liquidGradient 20s ease infinite;
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+@keyframes liquidGradient {
+  0%   { background-position: 0% 50%; }
+  25%  { background-position: 100% 0%; }
+  50%  { background-position: 100% 100%; }
+  75%  { background-position: 0% 100%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* ─── Glassmorphism Sidebar ─── */
+.sidebar {
+  background: rgba(15, 12, 41, 0.7) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.25) !important;
+}
+
+.sidebar .brand {
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.sidebar .brand span {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar .nav-link {
+  color: var(--text-secondary) !important;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.sidebar .nav-link:hover,
+.sidebar .nav-link.active {
+  color: #fff !important;
+  background: var(--glass-bg-hover) !important;
+}
+
+.sidebar .nav-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--accent-gradient);
+  border-radius: 0 3px 3px 0;
+}
+
+/* ─── Cards ─── */
+.card {
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  border-color: var(--glass-border-hover) !important;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.45) !important;
+}
+
+.card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--glass-border) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+.card-body {
+  color: var(--text-primary);
+}
+
+/* ─── Stat Cards ─── */
+.stat-card {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--accent-purple) !important;
+}
+
+.stat-card .stat-value {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.stat-card .stat-label {
+  color: var(--text-secondary) !important;
+}
+
+/* ─── Form Controls ─── */
+.form-select, .form-control, .input-group-text {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: #f1f5f9 !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.form-select::placeholder, .form-control::placeholder {
+  color: var(--text-muted) !important;
+}
+
+.form-select:focus, .form-control:focus {
+  border-color: var(--accent-purple) !important;
+  box-shadow: 0 0 0 0.2rem rgba(124, 58, 237, 0.25) !important;
+}
+
+.form-select option {
+  background: #1a1a3e !important;
+  color: #f1f5f9 !important;
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  background: var(--accent-gradient) !important;
+  border: none !important;
+  box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3) !important;
+  transition: all 0.3s ease;
+  color: #fff !important;
+}
+
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 25px rgba(124, 58, 237, 0.45) !important;
+  color: #fff !important;
+}
+
+.btn-outline-primary {
+  color: #a78bfa !important;
+  border-color: rgba(124, 58, 237, 0.3) !important;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover {
+  background: rgba(124, 58, 237, 0.15) !important;
+  color: #c4b5fd !important;
+  border-color: #7c3aed !important;
+}
+
+.btn-outline-danger {
+  color: #f87171 !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+}
+
+.btn-outline-danger:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+  color: #fca5a5 !important;
+  border-color: #ef4444 !important;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #fff !important;
+}
+
+.btn-outline-secondary {
+  color: var(--text-secondary) !important;
+  border-color: var(--glass-border) !important;
+  transition: all 0.2s ease;
+}
+
+.btn-outline-secondary:hover {
+  background: var(--glass-bg-hover) !important;
+  color: #fff !important;
+  border-color: var(--glass-border-hover) !important;
+}
+
+.btn-outline-warning {
+  color: #fbbf24 !important;
+  border-color: rgba(251, 191, 36, 0.3) !important;
+}
+
+.btn-outline-warning:hover {
+  background: rgba(251, 191, 36, 0.1) !important;
+  border-color: #fbbf24 !important;
+}
+
+/* ─── Badges ─── */
+.badge.bg-secondary {
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: var(--text-secondary) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.badge.bg-info { background: rgba(6, 182, 212, 0.25) !important; color: #67e8f9 !important; }
+.badge.bg-warning { background: rgba(251, 191, 36, 0.25) !important; color: #fbbf24 !important; }
+.badge.bg-primary { background: rgba(124, 58, 237, 0.25) !important; color: #a78bfa !important; }
+.badge.bg-success { background: rgba(34, 197, 94, 0.25) !important; color: #4ade80 !important; }
+
+/* ─── Background Utility Overrides ─── */
+.bg-light {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
+}
+
+/* ─── Progress Bar ─── */
+.progress {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.progress-bar {
+  background: var(--accent-gradient) !important;
+  border-radius: 10px !important;
+}
+
+/* ─── Table ─── */
+.table {
+  --bs-table-bg: transparent !important;
+  --bs-table-color: #f1f5f9 !important;
+  --bs-table-border-color: var(--glass-border) !important;
+  --bs-table-hover-bg: rgba(255, 255, 255, 0.05) !important;
+  --bs-table-striped-bg: rgba(255, 255, 255, 0.03) !important;
+}
+
+.table th {
+  color: var(--text-secondary) !important;
+}
+
+/* ─── Links ─── */
+a {
+  color: var(--accent-cyan) !important;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: #67e8f9 !important;
+}
+
+/* ─── Horizontal Rule ─── */
+hr {
+  border-color: var(--glass-border) !important;
+  opacity: 0.5;
+}
+
+/* ─── Modal ─── */
+.modal-content {
+  background: rgba(26, 26, 62, 0.95) !important;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--glass-border) !important;
+}
+
+/* ─── List Group ─── */
+.list-group-item {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--glass-border) !important;
+  color: #f1f5f9 !important;
+}
+
+/* ─── Tooltip / Popover ─── */
+.tooltip-inner {
+  background: rgba(26, 26, 62, 0.95) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+/* ─── Nav Tabs ─── */
+.nav-tabs {
+  border-bottom-color: var(--glass-border) !important;
+}
+
+.nav-tabs .nav-link {
+  color: var(--text-secondary) !important;
+  border: none !important;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #fff !important;
+  background: var(--glass-bg-hover) !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+.nav-tabs .nav-link.active {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-bottom: 2px solid var(--accent-purple) !important;
+}
+
+/* ─── Pagination ─── */
+.page-link {
+  background: rgba(255, 255, 255, 0.06) !important;
+  border-color: var(--glass-border) !important;
+  color: #f1f5f9 !important;
+}
+
+.page-link:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+.page-item.active .page-link {
+  background: var(--accent-gradient) !important;
+  border-color: transparent !important;
+}
+
+/* ─── Alert ─── */
+.alert {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(8px) !important;
+  border: 1px solid var(--glass-border) !important;
+  color: #f1f5f9 !important;
+}
+
+.alert-danger {
+  background: rgba(248, 113, 113, 0.15) !important;
+  border-color: rgba(248, 113, 113, 0.3) !important;
+  color: #fca5a5 !important;
+}
+
+.alert-success {
+  background: rgba(74, 222, 128, 0.15) !important;
+  border-color: rgba(74, 222, 128, 0.3) !important;
+  color: #86efac !important;
+}
+
+/* ─── Overlay / Loader ─── */
+.map-loader-overlay {
+  background: rgba(15, 12, 41, 0.85) !important;
+}
+
+.map-loader {
+  --c: no-repeat linear-gradient(#7c3aed 0 0) !important;
+}
+
+.bar-loader {
+  background: radial-gradient(closest-side at 37.5% 50%, #7c3aed 94%, #0000) 0/calc(80%/3) 100% !important;
+}
+
+/* ─── Form Labels ─── */
+.form-label {
+  color: var(--text-secondary) !important;
+}
+
+/* ─── Form Check ─── */
+.form-check-label {
+  color: var(--text-secondary) !important;
+}
+
+/* ─── Form Text ─── */
+.form-text {
+  color: var(--text-muted) !important;
+}
+
+/* ─── Heading Colors ─── */
+h1, h2, h3, h4, h5, h6 {
+  color: #f1f5f9;
+}
+
+/* ─── Small / Muted Text ─── */
+small, .small {
+  color: var(--text-secondary);
+}
+
+/* ─── Dropdown Menu ─── */
+.dropdown-menu {
+  background: rgba(26, 26, 62, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  border: 1px solid var(--glass-border) !important;
+}
+
+.dropdown-item {
+  color: var(--text-secondary) !important;
+}
+
+.dropdown-item:hover {
+  background: var(--glass-bg-hover) !important;
+  color: #fff !important;
+}
+
+/* ─── Close Button ─── */
+.btn-close {
+  filter: invert(1) !important;
+}

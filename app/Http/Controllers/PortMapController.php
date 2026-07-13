@@ -58,7 +58,7 @@ class PortMapController extends Controller
         }
 
         $liveVessels = [];
-        $apiStatus = 'inactive';
+        $apiStatus = 'simulated';
 
         try {
             if ($vesselApi->isKeyValid()) {
@@ -77,12 +77,13 @@ class PortMapController extends Controller
                         'status' => $pos['nav_status'] ?? '',
                     ];
                 })->filter(fn ($v) => $v['latitude'] && $v['longitude'])->values()->toArray();
-            } else {
-                $apiStatus = 'invalid_key';
             }
         } catch (\Exception $e) {
-            $apiStatus = 'error';
-            Log::warning('AISStream fetch failed, using simulation: '.$e->getMessage());
+            Log::warning('Vessel API fetch failed: '.$e->getMessage());
+        }
+
+        if (empty($liveVessels)) {
+            $apiStatus = 'simulated';
         }
 
         return view('portmap.index', [
@@ -102,7 +103,8 @@ class PortMapController extends Controller
         $name = $request->get('name');
         $country = $request->get('country');
 
-        $cacheKey = 'portmap.ports.'.md5(serialize(compact('type', 'search', 'name', 'country')));
+        $version = Cache::get('portmap_cache_version', 0);
+        $cacheKey = 'portmap.ports.v'.$version.'.'.md5(serialize(compact('type', 'search', 'name', 'country')));
 
         $data = Cache::remember($cacheKey, 300, function () use ($type, $search, $name, $country) {
             $q = Port::query();

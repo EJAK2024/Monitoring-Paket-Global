@@ -25,7 +25,7 @@
     #sidebarToggleBtn { transition: all 0.25s ease; }
     #sidebarToggleBtn:hover { background: rgba(255,255,255,0.25) !important; }
     #sidebarToggleBtn .bi { transition: transform 0.35s ease; }
-    .sidebar-header { background: linear-gradient(135deg, #1a2035 0%, #2a3050 100%); color: #fff; }
+    .sidebar-header { background: linear-gradient(135deg, #1a1040 0%, #2a1a5e 100%); color: #fff; }
     #sidebarTabs { border-bottom: 1px solid rgba(0,0,0,0.05); }
     #sidebarTabs .nav-link { border: none !important; color: #8892a0; padding: 0.5rem 0.8rem; font-size: 0.75rem; transition: all 0.2s; position: relative; }
     #sidebarTabs .nav-link:hover { color: #0d6efd; background: transparent; }
@@ -57,10 +57,8 @@
                 </div>
                 @if (!empty($liveVessels))
                     <span class="badge bg-success" style="font-size:0.5rem;">LIVE</span>
-                @elseif ($apiStatus === 'invalid_key')
-                    <span class="badge bg-danger" style="font-size:0.5rem;">KEY ERR</span>
-                @elseif ($apiStatus === 'no_key')
-                    <span class="badge bg-warning text-dark" style="font-size:0.5rem;">NO KEY</span>
+                @elseif ($apiStatus === 'simulated')
+                    <span class="badge bg-info text-dark" style="font-size:0.5rem;">EMBED</span>
                 @else
                     <span class="badge bg-secondary" style="font-size:0.5rem;">SIM</span>
                 @endif

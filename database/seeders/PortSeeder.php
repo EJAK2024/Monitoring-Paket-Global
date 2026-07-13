@@ -37,6 +37,6 @@ class PortSeeder extends Seeder
             $inserted++;
         }
 
-        $this->command->info("Imported {$inserted} new ports (skipped ".(count($ports) - $inserted)." duplicates)");
+        $this->command->info("Imported {$inserted} new ports (skipped ".(count($ports) - $inserted).' duplicates)');
     }
 }

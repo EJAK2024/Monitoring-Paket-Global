@@ -5,6 +5,9 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0">Admin Dashboard</h4>
+    <a href="{{ route('logout') }}" class="btn btn-outline-danger btn-sm">
+        <i class="bi bi-box-arrow-right"></i> Logout
+    </a>
 </div>
 
 <div class="row g-3 mb-4">

@@ -122,6 +122,7 @@ class RiskService implements RiskEngineInterface
         $rate = $country->inflation ?? $this->fetchInflation($country);
 
         $score = match (true) {
+            $rate === null => 0,
             $rate < 2 => 10,
             $rate <= 4 => 25,
             $rate <= 6 => 50,

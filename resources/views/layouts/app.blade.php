@@ -7,25 +7,56 @@
     <title>@yield('title', 'Supply Chain Risk Intelligence')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <style>
-        body { background: #f4f6f9; font-family: 'Segoe UI', sans-serif; }
-        .sidebar { min-height: 100vh; background: #1a2035; }
-        .sidebar .nav-link { color: #a0aec0; padding: 0.7rem 1.2rem; border-radius: 0.4rem; margin: 0.1rem 0; transition: 0.2s; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,0.08); }
+        .sidebar { min-height: 100vh; }
         .sidebar .nav-link i { width: 1.5rem; }
-        .sidebar .brand { padding: 1.2rem; font-weight: 700; font-size: 1.1rem; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.06); }
         .content { padding: 1.5rem; }
-        .card { border: none; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
-        .card-header { background: #fff; border-bottom: 1px solid #e9ecef; font-weight: 600; border-radius: 0.75rem 0.75rem 0 0 !important; }
         .stat-card { padding: 1.2rem; }
-        .stat-card .stat-value { font-size: 1.8rem; font-weight: 700; }
-        .stat-card .stat-label { color: #6c757d; font-size: 0.85rem; }
+        .stat-loader { display: none; margin-top: 0.4rem; }
+        .stat-loader.active { display: block; }
+        .bar-loader {
+            height: 15px;
+            aspect-ratio: 5;
+            -webkit-mask: linear-gradient(90deg,#0000 ,#000 20% 80%,#0000);
+            mask: linear-gradient(90deg,#0000 ,#000 20% 80%,#0000);
+            animation: barLoader .75s infinite linear;
+        }
+        @keyframes barLoader {
+            100% {background-position: 36.36%}
+        }
         .map-container { height: 450px; border-radius: 0.75rem; }
+        .map-loader-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.3s;
+        }
+        .map-loader-overlay.hidden { display: none; }
+        .map-loader {
+            width: 45px;
+            aspect-ratio: .75;
+            background:
+                var(--c) 0%   50%,
+                var(--c) 50%  50%,
+                var(--c) 100% 50%;
+            animation: mapLoader 1s infinite linear alternate;
+        }
+        @keyframes mapLoader {
+            0%  {background-size: 20% 50% ,20% 50% ,20% 50% }
+            20% {background-size: 20% 20% ,20% 50% ,20% 50% }
+            40% {background-size: 20% 100%,20% 20% ,20% 50% }
+            60% {background-size: 20% 50% ,20% 100%,20% 20% }
+            80% {background-size: 20% 50% ,20% 50% ,20% 100%}
+            100%{background-size: 20% 50% ,20% 50% ,20% 50% }
+        }
     </style>
 </head>
 <body>
     <div class="d-flex">
         <div class="sidebar" style="width: 250px; flex-shrink: 0;">
-            <div class="brand">Monitoring Paket Internasional</div>
+            <div class="brand"><span>Monitoring Paket Internasional</span></div>
             <nav class="nav flex-column px-2 py-3">
                 <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                     <i class="bi bi-grid"></i> Global Country Dashboard

@@ -1,7 +1,7 @@
-const CACHE_NAME = 'supply-chain-v2';
+const CACHE_NAME = 'supply-chain-v4';
 const CACHE_EXPIRY = 30 * 60 * 1000;
 
-const EXCLUDE_FROM_CACHE = ['/portmap'];
+const EXCLUDE_FROM_CACHE = ['/portmap', '/admin', '/login'];
 
 const PRECACHE_URLS = [
     '/',
@@ -9,7 +9,6 @@ const PRECACHE_URLS = [
     '/watchlist',
     '/currency',
     '/viz',
-    '/admin',
 ];
 
 self.addEventListener('install', (event) => {

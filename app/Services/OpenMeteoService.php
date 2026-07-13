@@ -8,27 +8,38 @@ use Illuminate\Support\Facades\Log;
 
 class OpenMeteoService implements WeatherServiceInterface
 {
+    private const FALLBACK_COORDS = [
+        'Antarctica' => ['latitude' => -82.8628, 'longitude' => 135.0],
+    ];
+
     public function getWeather(string $city): ?array
     {
-        try {
-            $geo = Http::timeout(10)->get('https://geocoding-api.open-meteo.com/v1/search', [
-                'name' => $city,
-                'count' => 1,
-                'language' => 'en',
-                'format' => 'json',
-            ])->json();
-        } catch (\Exception $e) {
-            Log::warning("OpenMeteo geocoding failed for {$city}: {$e->getMessage()}");
+        $coords = self::FALLBACK_COORDS[$city] ?? null;
 
-            return null;
+        if ($coords) {
+            $lat = $coords['latitude'];
+            $lon = $coords['longitude'];
+        } else {
+            try {
+                $geo = Http::timeout(10)->get('https://geocoding-api.open-meteo.com/v1/search', [
+                    'name' => $city,
+                    'count' => 1,
+                    'language' => 'en',
+                    'format' => 'json',
+                ])->json();
+            } catch (\Exception $e) {
+                Log::warning("OpenMeteo geocoding failed for {$city}: {$e->getMessage()}");
+
+                return null;
+            }
+
+            if (empty($geo['results'][0])) {
+                return null;
+            }
+
+            $lat = $geo['results'][0]['latitude'];
+            $lon = $geo['results'][0]['longitude'];
         }
-
-        if (empty($geo['results'][0])) {
-            return null;
-        }
-
-        $lat = $geo['results'][0]['latitude'];
-        $lon = $geo['results'][0]['longitude'];
 
         try {
             $weather = Http::timeout(10)->get('https://api.open-meteo.com/v1/forecast', [
