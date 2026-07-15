@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\WeatherServiceInterface;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -14,6 +15,8 @@ class OpenMeteoService implements WeatherServiceInterface
 
     public function getWeather(string $city): ?array
     {
+        $cacheKey = 'weather.' . strtolower(str_replace(' ', '_', $city));
+        return Cache::remember($cacheKey, 1800, function () use ($city) {
         $coords = self::FALLBACK_COORDS[$city] ?? null;
 
         if ($coords) {
@@ -61,6 +64,7 @@ class OpenMeteoService implements WeatherServiceInterface
         }
 
         return $this->enrich($current);
+        });
     }
 
     public function enrich(array $current): array

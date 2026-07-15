@@ -5,15 +5,22 @@ namespace App\Services;
 use App\Contracts\SentimentAnalyzerInterface;
 use App\Models\NegativeWord;
 use App\Models\PositiveWord;
+use Illuminate\Support\Facades\Cache;
 
 class SentimentService implements SentimentAnalyzerInterface
 {
     public function analyze(string $text): array
     {
         $words = array_map('strtolower', str_word_count($text, 1));
-        $positiveWords = PositiveWord::pluck('word')->map(fn ($w) => strtolower($w))->toArray();
-        $negativeWords = NegativeWord::where('category', 'negative')->pluck('word')->map(fn ($w) => strtolower($w))->toArray();
-        $crisisWords = NegativeWord::where('category', 'crisis')->pluck('word')->map(fn ($w) => strtolower($w))->toArray();
+        $positiveWords = Cache::remember('sentiment.positive_words', 3600, function () {
+            return PositiveWord::pluck('word')->map(fn ($w) => strtolower($w))->toArray();
+        });
+        $negativeWords = Cache::remember('sentiment.negative_words', 3600, function () {
+            return NegativeWord::where('category', 'negative')->pluck('word')->map(fn ($w) => strtolower($w))->toArray();
+        });
+        $crisisWords = Cache::remember('sentiment.crisis_words', 3600, function () {
+            return NegativeWord::where('category', 'crisis')->pluck('word')->map(fn ($w) => strtolower($w))->toArray();
+        });
 
         $positiveScore = 0;
         $negativeScore = 0;

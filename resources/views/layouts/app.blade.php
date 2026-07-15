@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,12 +16,15 @@
         .bar-loader {
             height: 15px;
             aspect-ratio: 5;
-            -webkit-mask: linear-gradient(90deg,#0000 ,#000 20% 80%,#0000);
-            mask: linear-gradient(90deg,#0000 ,#000 20% 80%,#0000);
-            animation: barLoader .75s infinite linear;
+            background: linear-gradient(90deg, #7c3aed, #06b6d4);
+            background-size: 200% 100%;
+            -webkit-mask: linear-gradient(90deg, transparent, #000 20% 80%, transparent);
+            mask: linear-gradient(90deg, transparent, #000 20% 80%, transparent);
+            animation: barLoader 1s infinite linear;
         }
         @keyframes barLoader {
-            100% {background-position: 36.36%}
+            0% { background-position: 0% 0; }
+            100% { background-position: 100% 0; }
         }
         .map-container { height: 450px; border-radius: 0.75rem; }
         .map-loader-overlay {
@@ -37,10 +40,12 @@
         .map-loader {
             width: 45px;
             aspect-ratio: .75;
+            --c: #7c3aed;
             background:
                 var(--c) 0%   50%,
                 var(--c) 50%  50%,
                 var(--c) 100% 50%;
+            background-repeat: no-repeat;
             animation: mapLoader 1s infinite linear alternate;
         }
         @keyframes mapLoader {
@@ -56,8 +61,8 @@
 <body>
     <div class="d-flex">
         <div class="sidebar" style="width: 250px; flex-shrink: 0;">
-            <div class="brand"><span>Monitoring Paket Internasional</span></div>
-            <nav class="nav flex-column px-2 py-3">
+            <div class="brand"><a href="{{ url()->current() }}" class="brand-link">Monitoring Paket Internasional</a></div>
+            <nav class="nav flex-column px-2    py-3">
                 <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                     <i class="bi bi-grid"></i> Global Country Dashboard
                 </a>

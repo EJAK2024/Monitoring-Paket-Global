@@ -17,6 +17,18 @@ export default defineConfig({
             refresh: true,
         }),
     ],
+    build: {
+        rollupOptions: {
+            output: {
+                manualChunks: {
+                    vendor: ['chart.js', 'leaflet', 'leaflet.markercluster'],
+                },
+            },
+        },
+        target: 'es2020',
+        minify: 'esbuild',
+        cssMinify: true,
+    },
     server: {
         watch: {
             ignored: ['**/storage/framework/views/**'],

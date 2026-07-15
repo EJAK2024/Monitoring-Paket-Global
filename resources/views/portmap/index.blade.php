@@ -5,7 +5,7 @@
 @section('content')
 <style>
     .content { padding: 0 !important; }
-    #sidebar { width: 380px; will-change: width; border-right: 1px solid rgba(0,0,0,0.06); transition: width 0.3s ease; }
+    #sidebar { width: 380px; will-change: width; border-right: 1px solid rgba(0,0,0,0.06); transition: width 0.3s ease; color: #212529; background: #fff; }
     @media (max-width: 768px) { #sidebar { width: 100%; } }
     .vessel-item:hover, .port-item:hover { background: #f0f4ff; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
@@ -26,12 +26,13 @@
     #sidebarToggleBtn:hover { background: rgba(255,255,255,0.25) !important; }
     #sidebarToggleBtn .bi { transition: transform 0.35s ease; }
     .sidebar-header { background: linear-gradient(135deg, #1a1040 0%, #2a1a5e 100%); color: #fff; }
-    #sidebarTabs { border-bottom: 1px solid rgba(0,0,0,0.05); }
-    #sidebarTabs .nav-link { border: none !important; color: #8892a0; padding: 0.5rem 0.8rem; font-size: 0.75rem; transition: all 0.2s; position: relative; }
-    #sidebarTabs .nav-link:hover { color: #0d6efd; background: transparent; }
-    #sidebarTabs .nav-link.active { color: #0d6efd; background: transparent; }
-    #sidebarTabs .nav-link.active::after { content: ''; position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 60%; height: 2px; background: #0d6efd; border-radius: 1px; }
-    .panel-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #6c757d; }
+    #sidebarTabs { border-bottom: 1px solid #dee2e6; background: #f8f9fc; }
+    #sidebarTabs .nav-link { border: none !important; color: #495057; padding: 0.5rem 0.8rem; font-size: 0.75rem; transition: all 0.2s; position: relative; }
+    #sidebarTabs .nav-link:hover { color: #0d6efd; background: rgba(13,110,253,0.06); border-radius: 4px 4px 0 0; }
+    #sidebarTabs .nav-link.active { color: #0d6efd; background: #fff; border-radius: 4px 4px 0 0; font-weight: 600; }
+    #sidebarTabs .nav-link.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 60%; height: 2px; background: #0d6efd; border-radius: 1px; }
+    .tab-content { background: #fff; border-top: none; }
+    .panel-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #343a40; }
     .sidebar-list { max-height: 320px; overflow-y: auto; }
     .sidebar-list::-webkit-scrollbar { width: 4px; }
     .sidebar-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }

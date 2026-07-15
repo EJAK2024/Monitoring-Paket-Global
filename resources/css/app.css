@@ -54,11 +54,13 @@ body {
   border-bottom: 1px solid var(--glass-border) !important;
 }
 
-.sidebar .brand span {
-  background: var(--accent-gradient);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.sidebar .brand .brand-link {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+}
+.sidebar .brand .brand-link:hover {
+  color: #e0e0e0;
 }
 
 .sidebar .nav-link {

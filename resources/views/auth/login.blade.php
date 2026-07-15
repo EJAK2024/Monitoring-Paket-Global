@@ -25,7 +25,12 @@
 
                 <div class="mb-3">
                     <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" required autocomplete="new-password">
+                    <div class="input-group">
+                        <input type="password" name="password" id="password" class="form-control" required autocomplete="new-password">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword" style="border-color: #ced4da;">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="mb-3 form-check">
@@ -38,4 +43,20 @@
         </div>
     </div>
 </div>
+@endsection
+
+@section('scripts')
+<script>
+document.getElementById('togglePassword').addEventListener('click', function () {
+    const input = document.getElementById('password');
+    const icon = this.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+});
+</script>
 @endsection

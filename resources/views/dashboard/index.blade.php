@@ -14,7 +14,7 @@
 </div>
 
 <div id="noSelection" class="text-center py-5">
-    <p class="text-muted fs-5">Select a country above to view all intelligence data.</p>
+    <p class="text-muted fs-5">Select a country to view all intelligence data.</p>
 </div>
 
 <div id="countryData" style="display: none;">

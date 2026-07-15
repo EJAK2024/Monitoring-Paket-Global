@@ -135,41 +135,42 @@ class WorldBankService implements EconomicDataProviderInterface
 
     private function fetchIndicator(string $isoCode, string $indicatorCode): ?float
     {
-        try {
-            $response = Http::timeout(config('worldbank.timeout'))
-                ->get(config('worldbank.base_url')."/country/{$isoCode}/indicator/{$indicatorCode}", [
-                    'format' => 'json',
-                    'per_page' => 1,
-                ])->json();
-        } catch (\Exception $e) {
-            Log::warning("WorldBank API (indicator) failed for {$isoCode}/{$indicatorCode}: {$e->getMessage()}");
+        $cacheKey = "worldbank.indicator.{$isoCode}.{$indicatorCode}";
 
-            return null;
-        }
+        return Cache::remember($cacheKey, config('worldbank.cache_ttl'), function () use ($isoCode, $indicatorCode) {
+            try {
+                $response = Http::timeout(config('worldbank.timeout'))
+                    ->get(config('worldbank.base_url')."/country/{$isoCode}/indicator/{$indicatorCode}", [
+                        'format' => 'json',
+                        'per_page' => 1,
+                    ])->json();
+            } catch (\Exception $e) {
+                Log::warning("WorldBank API (indicator) failed for {$isoCode}/{$indicatorCode}: {$e->getMessage()}");
 
-        if (empty($response[1][0])) {
-            return null;
-        }
+                return null;
+            }
 
-        $value = $response[1][0]['value'] ?? null;
+            if (empty($response[1][0])) {
+                return null;
+            }
 
-        if ($value === null) {
-            return null;
-        }
+            $value = $response[1][0]['value'] ?? null;
 
-        $numeric = (float) $value;
+            if ($value === null) {
+                return null;
+            }
 
-        if (in_array($indicatorCode, array_values(config('worldbank.indicators')))) {
-            $codes = config('worldbank.normalize');
+            $numeric = (float) $value;
+
             $indicatorKeys = array_flip(config('worldbank.indicators'));
             $key = $indicatorKeys[$indicatorCode] ?? null;
-            if ($key && in_array($key, $codes, true)) {
+            if ($key && in_array($key, config('worldbank.normalize'), true)) {
                 $numeric = round($numeric / 1e9, 2);
             } else {
                 $numeric = round($numeric, 2);
             }
-        }
 
-        return $numeric;
+            return $numeric;
+        });
     }
 }
