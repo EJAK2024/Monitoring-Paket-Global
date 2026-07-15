@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:w="urn:schemas-microsoft-com:office:word"
+      xmlns="http://www.w3.org/TR/REC-html40">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<title>Global Supply Chain Risk Intelligence Platform - Dokumentasi</title>
+<style>
+    @page { size: A4; margin: 2.54cm 2.54cm; mso-page-orientation: portrait; }
+    body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #1a1a1a; }
+    h1 { font-size: 20pt; color: #2a1a5e; border-bottom: 3px solid #7c3aed; padding-bottom: 8px; margin-top: 28px; margin-bottom: 12px; }
+    h2 { font-size: 16pt; color: #3a2a6e; border-bottom: 2px solid #06b6d4; padding-bottom: 4px; margin-top: 24px; margin-bottom: 10px; }
+    h3 { font-size: 13pt; color: #4a3a7e; margin-top: 18px; margin-bottom: 8px; }
+    h4 { font-size: 11pt; color: #5a4a8e; margin-top: 14px; margin-bottom: 6px; }
+    p { margin: 6px 0; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10pt; }
+    th, td { border: 1px solid #bbb; padding: 6px 10px; text-align: left; vertical-align: top; }
+    th { background: #f0edf8; font-weight: 600; }
+    tr:nth-child(even) { background: #f9f8fc; }
+    code { background: #f4f0ff; padding: 1px 5px; font-family: 'Consolas', 'Courier New', monospace; font-size: 9.5pt; }
+    pre { background: #1a1a2e; color: #e0e0e0; padding: 12px 16px; font-family: 'Consolas', 'Courier New', monospace; font-size: 9pt; }
+    pre code { background: none; padding: 0; color: inherit; }
+    ul, ol { margin: 8px 0; padding-left: 24px; }
+    li { margin: 3px 0; }
+    hr { border: none; border-top: 2px solid #ddd; margin: 24px 0; }
+    .cover { text-align: center; padding: 80px 0 40px 0; }
+    .cover h1 { font-size: 28pt; border: none; color: #2a1a5e; margin-bottom: 16px; }
+    .cover .subtitle { font-size: 16pt; color: #7c3aed; margin: 16px 0; }
+    .cover .meta { font-size: 11pt; color: #666; margin-top: 60px; }
+    .cover .meta p { margin: 4px 0; }
+    .diagram-placeholder { background: #f8f4ff; border: 1px dashed #7c3aed; padding: 16px 20px; margin: 12px 0; border-radius: 4px; color: #555; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+    <h1>Global Supply Chain Risk<br>Intelligence Platform</h1>
+    <div class="subtitle">Platform Monitoring Risiko Rantai Pasok Global</div>
+    <hr style="width: 60%; margin: 30px auto;">
+    <div class="meta">
+        <p><strong>Versi Dokumentasi:</strong> 1.0</p>
+        <p><strong>Tanggal:</strong> Juli 2026</p>
+        <p><strong>Dibuat dengan:</strong> Laravel 12 · Bootstrap 5 · Chart.js · Leaflet.js · MySQL · Vite 7</p>
+    </div>
+    <hr style="width: 60%; margin: 30px auto;">
+    <p style="color: #999; font-size: 10pt;">Global Supply Chain Risk Intelligence Platform</p>
+</div>
+
+<h1>🌐 Global Supply Chain Risk Intelligence Platform</h1>
+<p><strong>Platform Monitoring Risiko Rantai Pasok Global</strong> — Sistem berbasis web untuk mengagregasi data dari berbagai API eksternal, menghitung skor risiko multi-dimensi per negara, dan menampilkan visualisasi geospasial.</p>
+<hr>
+<h2>Daftar Isi</h2>
+<ol>
+<li><a href="#1-arsitektur-sistem">Arsitektur Sistem</a></li>
+<li><a href="#2-menu--fungsinya">Menu &amp; Fungsinya</a></li>
+<li><a href="#3-halaman-dashboard-utama">Halaman Dashboard Utama</a></li>
+<li><a href="#4-halaman-pendukung">Halaman Pendukung</a></li>
+<li><a href="#5-risk-scoring-engine">Risk Scoring Engine</a></li>
+<li><a href="#6-database">Database</a></li>
+<li><a href="#7-api-endpoints">API Endpoints</a></li>
+<li><a href="#8-external-apis">External APIs</a></li>
+</ol>
+<hr>
+<h2>1. Arsitektur Sistem</h2>
+<pre><code class="language-mermaid">graph TB
+    User[User Browser] --&gt; Laravel[Laravel 12 Backend]
+    Laravel --&gt; MySQL[(MySQL Database)]
+    Laravel --&gt; Cache[(File Cache)]
+    
+    subgraph &quot;Services Layer&quot;
+        Weather[OpenMeteoService]
+        WorldBank[WorldBankService]
+        GNews[GNewsService]
+        Sentiment[SentimentService]
+        Risk[RiskService]
+        Currency[ExchangeRateService]
+        Port[WorldPortIndexService]
+    end
+    
+    Laravel --&gt; Weather
+    Laravel --&gt; WorldBank
+    Laravel --&gt; GNews
+    Laravel --&gt; Sentiment
+    Laravel --&gt; Risk
+    Laravel --&gt; Currency
+    Laravel --&gt; Port
+    
+    Weather --&gt; API_OpenMeteo[Open-Meteo API]
+    WorldBank --&gt; API_WorldBank[World Bank API]
+    GNews --&gt; API_GNews[GNews API]
+    Currency --&gt; API_Exchange[ExchangeRate API]
+    
+    subgraph &quot;Frontend (Vite + Bootstrap 5)&quot;
+        DashboardJS[dashboard.js]
+        CurrencyJS[currency.js]
+        PortmapJS[portmap.js]
+        VizJS[viz.js]
+        WatchlistJS[watchlist.js]
+        AdminJS[admin.js]
+    end
+    
+    User --&gt; DashboardJS
+    User --&gt; CurrencyJS
+    User --&gt; PortmapJS
+    DashboardJS --&gt;|AJAX| Laravel
+    CurrencyJS --&gt;|AJAX| Laravel
+    PortmapJS --&gt;|AJAX| Laravel
+</code></pre>
+<hr>
+<h2>2. Menu &amp; Fungsinya</h2>
+<p>Terdapat <strong>6 menu utama</strong> di sidebar kiri:</p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph Sidebar
+        M1[Global Country Dashboard]
+        M2[Favorite Monitoring List]
+        M3[Peta Pelabuhan]
+        M4[Currency Impact Dashboard]
+        M5[Data Visualization]
+        M6[Admin Dashboard]
+    end
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>No</th>
+<th>Menu</th>
+<th>Icon</th>
+<th>Route</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td><strong>Global Country Dashboard</strong></td>
+<td><code>📊</code></td>
+<td><code>/dashboard</code></td>
+<td>Halaman utama — menampilkan semua data negara (ekonomi, cuaca, risiko, berita, peta, currency)</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>Favorite Monitoring List</strong></td>
+<td><code>⭐</code></td>
+<td><code>/watchlist</code></td>
+<td>Daftar negara favorit yang dipantau pengguna</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>Peta Pelabuhan</strong></td>
+<td><code>🗺️</code></td>
+<td><code>/portmap</code></td>
+<td>Peta interaktif pelabuhan dunia + tracking kapal real-time</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>Currency Impact Dashboard</strong></td>
+<td><code>💱</code></td>
+<td><code>/currency</code></td>
+<td>Grafik tren nilai tukar + tabel kurs real-time</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>Data Visualization</strong></td>
+<td><code>📈</code></td>
+<td><code>/viz</code></td>
+<td>Visualisasi data ekonomi multi-negara (GDP, inflasi, currency, risiko)</td>
+</tr>
+<tr>
+<td>6</td>
+<td><strong>Admin Dashboard</strong></td>
+<td><code>⚙️</code></td>
+<td><code>/admin</code></td>
+<td>CRUD untuk port, artikel, user + ringkasan data</td>
+</tr>
+</tbody></table>
+<h3>2.1 Global Country Dashboard</h3>
+<p>Halaman utama yang menampilkan <strong>9 seksi data</strong> setelah user memilih negara:</p>
+<pre><code class="language-mermaid">graph TD
+    Select[Pilih Negara] --&gt; Cards[1. Stat Cards]
+    Select --&gt; Risk[2. Risk Score Engine]
+    Select --&gt; Weather[3. Current Weather]
+    Select --&gt; Map[4. Country &amp; Port Map]
+    Select --&gt; Currency[5. Currency Impact]
+    Select --&gt; News[6. News Intelligence]
+    Select --&gt; Charts[7. Data Visualization Charts]
+    Select --&gt; Compare[8. Country Comparison]
+    Select --&gt; Watchlist[9. Favorite Monitoring List]
+</code></pre>
+<h4>Stat Cards (4 buah)</h4>
+<table>
+<thead>
+<tr>
+<th>Stat Card</th>
+<th>ID Element</th>
+<th>Data</th>
+<th>Sumber API</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>GDP (USD B)</strong></td>
+<td><code>#dash_gdp</code></td>
+<td>Produk Domestik Bruto dalam miliar USD</td>
+<td>World Bank API</td>
+</tr>
+<tr>
+<td><strong>Inflation (%)</strong></td>
+<td><code>#dash_inflation</code></td>
+<td>Tingkat inflasi tahunan dalam persen</td>
+<td>World Bank API</td>
+</tr>
+<tr>
+<td><strong>Population</strong></td>
+<td><code>#dash_population</code></td>
+<td>Jumlah penduduk</td>
+<td>World Bank API</td>
+</tr>
+<tr>
+<td><strong>Currency</strong></td>
+<td><code>#dash_currency</code></td>
+<td>Kode mata uang negara (USD, EUR, IDR, dll)</td>
+<td>Database</td>
+</tr>
+</tbody></table>
+<p><strong>Cara kerja</strong>: Saat user memilih negara dari dropdown, JS mengirim AJAX ke <code>/api/countries/{id}</code>. Data dari World Bank diambil jika belum ada di database, lalu ditampilkan di card. Setiap card memiliki <strong>loader animasi</strong> yang aktif selama proses fetch.</p>
+<h4>Risk Score Engine</h4>
+<p>Menampilkan skor risiko komposit dengan formula:</p>
+<pre><code>Total = (Weather × 25%) + (Inflation × 25%) + (News × 25%) + (FX Rate × 25%)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>ID Element</th>
+<th>Bobot</th>
+<th>Warna</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Weather Risk</td>
+<td><code>#dash_rWeather</code></td>
+<td>25%</td>
+<td>Info (biru muda)</td>
+</tr>
+<tr>
+<td>Inflation Risk</td>
+<td><code>#dash_rInflation</code></td>
+<td>25%</td>
+<td>Warning (kuning)</td>
+</tr>
+<tr>
+<td>News Sentiment Risk</td>
+<td><code>#dash_rNews</code></td>
+<td>25%</td>
+<td>Primary (biru)</td>
+</tr>
+<tr>
+<td>FX Rate Risk</td>
+<td><code>#dash_rCurrency</code></td>
+<td>25%</td>
+<td>Success (hijau)</td>
+</tr>
+</tbody></table>
+<p>Hasil akhir: <strong>Low</strong> (≤30), <strong>Medium</strong> (≤60), <strong>High</strong> (&gt;60).</p>
+<h4>Current Weather</h4>
+<p>Data cuaca <strong>real-time</strong> dari Open-Meteo API (gratis, tanpa API key):</p>
+<ul>
+<li>🌡️ <strong>Temperature</strong> — suhu dalam °C</li>
+<li>🌧️ <strong>Precipitation</strong> — curah hujan dalam mm</li>
+<li>💨 <strong>Wind Speed</strong> — kecepatan angin dalam km/h</li>
+<li>⛈️ <strong>Storm Risk</strong> — risiko badai (Low/Moderate/High)</li>
+</ul>
+<h4>Country &amp; Port Map</h4>
+<p>Peta <strong>Leaflet.js</strong> dengan OpenStreetMap yang menampilkan:</p>
+<ul>
+<li>📍 <strong>Lokasi negara</strong> yang dipilih (marker)</li>
+<li>⚓ <strong>Pelabuhan</strong> di negara tersebut dari World Port Index</li>
+<li>Otomatis zoom ke area yang relevan</li>
+</ul>
+<h4>Currency Impact Dashboard</h4>
+<ul>
+<li><strong>Base Currency Selector</strong>: pilih mata uang dasar (USD, EUR, GBP, JPY, IDR, CNY, SGD, AUD)</li>
+<li><strong>Bar Chart</strong>: perbandingan nilai tukar terhadap mata uang lain</li>
+<li><strong>Exchange Rate Table</strong>: tabel kurs real-time</li>
+</ul>
+<h4>News Intelligence</h4>
+<p>Fitur analisis berita dengan <strong>sentiment analysis</strong>:</p>
+<ul>
+<li><strong>Keyword Search</strong>: cari berita berdasarkan kata kunci</li>
+<li><strong>8 Category Filters</strong>: Economy, Logistics, Trade, Shipping, Geopolitics, Inflation, Export/Import, Manufacturing</li>
+<li><strong>Sentiment Breakdown</strong>:<ul>
+<li>🟢 Positive — berita positif</li>
+<li>⚪ Neutral — berita netral</li>
+<li>🔴 Negative — berita negatif</li>
+</ul>
+</li>
+<li>Daftar artikel dengan label sentimen masing-masing</li>
+</ul>
+<h4>Data Visualization Charts (4 chart)</h4>
+<table>
+<thead>
+<tr>
+<th>Chart</th>
+<th>ID</th>
+<th>Tipe</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Economic Profile</td>
+<td><code>#dash_econRadar</code></td>
+<td>Radar</td>
+<td>GDP, Inflation, Population, Exports, Imports</td>
+</tr>
+<tr>
+<td>GDP · Exports · Imports</td>
+<td><code>#dash_tradeChart</code></td>
+<td>Bar</td>
+<td>Perbandingan 3 indikator</td>
+</tr>
+<tr>
+<td>Risk Component Pie</td>
+<td><code>#dash_riskPie</code></td>
+<td>Doughnut</td>
+<td>Porsi risiko per komponen</td>
+</tr>
+<tr>
+<td>Inflation vs GDP</td>
+<td><code>#dash_dualChart</code></td>
+<td>Dual Bar</td>
+<td>Perbandingan inflasi &amp; GDP</td>
+</tr>
+</tbody></table>
+<h4>Country Comparison Engine</h4>
+<p>Membandingkan <strong>2 negara</strong> secara side-by-side:</p>
+<table>
+<thead>
+<tr>
+<th>Indikator</th>
+<th>Negara A</th>
+<th>Negara B</th>
+<th>Pemenang</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GDP (USD B)</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Inflation (%)</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Risk Score</td>
+<td>✅</td>
+<td>❌</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>Weather (°C)</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Currency</td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+</tbody></table>
+<p>Disertai <strong>Radar Chart</strong> perbandingan visual.</p>
+<h4>Favorite Monitoring List</h4>
+<ul>
+<li>Tombol <strong>Add to Watchlist / Remove</strong> untuk menandai negara favorit</li>
+<li>Daftar kartu negara yang dipantau dengan info singkat (GDP, Inflation)</li>
+</ul>
+<hr>
+<h3>2.2 Favorite Monitoring List (<code>/watchlist</code>)</h3>
+<p>Halaman untuk mengelola daftar negara favorit:</p>
+<ul>
+<li><strong>Dropdown negara</strong> + tombol <strong>Add</strong> untuk menambah</li>
+<li><strong>Kartu grid</strong> menampilkan semua negara yang di-watchlist</li>
+<li>Data: Nama negara, GDP, Inflation</li>
+<li>AJAX CRUD via <code>/api/watchlist</code></li>
+</ul>
+<hr>
+<h3>2.3 Peta Pelabuhan (<code>/portmap</code>)</h3>
+<p>Halaman <strong>full-height</strong> dengan MarineTraffic embed + sidebar interaktif:</p>
+<pre><code class="language-mermaid">graph LR
+    subgraph Sidebar
+        Tab1[🔍 Search]
+        Tab2[⚓ Ports]
+        Tab3[🚢 Vessels]
+        Tab4[🗺️ Layers]
+    end
+    
+    Tab1 --&gt; PortSearch[Pencarian Pelabuhan]
+    Tab1 --&gt; VesselSearch[Pencarian Kapal]
+    Tab2 --&gt; PortList[Daftar Pelabuhan]
+    Tab3 --&gt; VesselList[Daftar Kapal Aktif]
+    Tab4 --&gt; LayerToggle[Toggle Overlay]
+    Tab4 --&gt; Legend[Legenda Warna]
+</code></pre>
+<p><strong>Sidebar Tabs</strong>:</p>
+<ol>
+<li><strong>Search</strong> — cari pelabuhan (nama/negara) + cari kapal (nama/MMSI/IMO)</li>
+<li><strong>Ports</strong> — direktori pelabuhan dengan filter tipe + klik untuk navigasi peta</li>
+<li><strong>Vessels</strong> — daftar kapal aktif dengan filter tipe + refresh</li>
+<li><strong>Layers</strong> — toggle trade routes, vessels + legenda warna</li>
+</ol>
+<p><strong>Ship Info Panel</strong>: Panel detail kapal saat diklik (Type, Speed, Heading, Route, Destination, Status) dengan tombol Follow, Route Highlight, Untrack.</p>
+<hr>
+<h3>2.4 Currency Impact Dashboard (<code>/currency</code>)</h3>
+<p>Halaman analisis nilai tukar:</p>
+<p><strong>Stat Cards</strong> (3):</p>
+<table>
+<thead>
+<tr>
+<th>Card</th>
+<th>Data</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>💱 Currency</td>
+<td>Kode mata uang negara</td>
+</tr>
+<tr>
+<td>📊 Latest Rate</td>
+<td>Nilai tukar terkini per 1 USD</td>
+</tr>
+<tr>
+<td>📈 90-Day Change</td>
+<td>Persentase perubahan 90 hari</td>
+</tr>
+</tbody></table>
+<p><strong>Charts &amp; Tables</strong>:</p>
+<ol>
+<li><strong>Exchange Rate Trend</strong> — line chart 90 hari</li>
+<li><strong>Snapshot vs Major Currencies</strong> — tabel kurs</li>
+<li><strong>Live Cross Rates</strong> — bar chart perbandingan</li>
+</ol>
+<hr>
+<h3>2.5 Data Visualization (<code>/viz</code>)</h3>
+<p>Halaman visualisasi multi-negara dengan <strong>4 chart</strong> (2×2 grid):</p>
+<table>
+<thead>
+<tr>
+<th>Chart</th>
+<th>ID</th>
+<th>Tipe</th>
+<th>Rentang Data</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GDP Trend</td>
+<td><code>#viz_gdp</code></td>
+<td>Line chart</td>
+<td>10 tahun</td>
+</tr>
+<tr>
+<td>Inflation Trend</td>
+<td><code>#viz_inflation</code></td>
+<td>Line chart</td>
+<td>10 tahun</td>
+</tr>
+<tr>
+<td>Currency Trend</td>
+<td><code>#viz_currency</code></td>
+<td>Line chart</td>
+<td>90 hari</td>
+</tr>
+<tr>
+<td>Risk Trend</td>
+<td><code>#viz_risk</code></td>
+<td>Line chart</td>
+<td>12 bulan</td>
+</tr>
+</tbody></table>
+<p>Semua chart diperbarui saat user memilih negara dari dropdown.</p>
+<hr>
+<h3>2.6 Admin Dashboard (<code>/admin</code>)</h3>
+<p>Halaman administrasi dengan sub-menu:</p>
+<p><strong>Admin Dashboard</strong> (<code>/admin</code>):</p>
+<ul>
+<li><strong>Stat Cards</strong>: Users, Countries, Ports, Articles count</li>
+<li><strong>Risk Overview Chart</strong>: grafik risiko semua negara</li>
+<li><strong>Management Links</strong>: Manage Ports, Manage Articles, Manage Users</li>
+</ul>
+<p><strong>Manage Ports</strong> (<code>/admin/ports</code>):</p>
+<ul>
+<li>Tabel port dengan CRUD</li>
+<li>Form tambah port: Name, Country, Country Code, Latitude, Longitude, Port Type</li>
+<li>Tipe port: Container, Multi-purpose, Energy, Industrial, Fishing, Passenger, Military</li>
+</ul>
+<p><strong>Manage Articles</strong> (<code>/admin/articles</code>):</p>
+<ul>
+<li>Tabel artikel dengan pagination</li>
+<li>Form tambah artikel: Title, Content, Author, Published At</li>
+</ul>
+<p><strong>Manage Users</strong> (<code>/admin/users</code>):</p>
+<ul>
+<li>Form create user: Name, Email, Password, Admin checkbox</li>
+<li>Tabel user dengan Role badge + Delete</li>
+</ul>
+<hr>
+<h2>5. Risk Scoring Engine</h2>
+<p><strong>Lokasi</strong>: <code>app/Services/RiskService.php</code></p>
+<pre><code class="language-mermaid">flowchart LR
+    subgraph Input
+        Country[Negara Dipilih]
+    end
+    
+    subgraph Components
+        W[Weather 25%]
+        I[Inflation 25%]
+        N[News 25%]
+        F[FX Rate 25%]
+    end
+    
+    subgraph Scoring
+        W --&gt; WScore[0-100]
+        I --&gt; IScore[0-100]
+        N --&gt; NScore[0-100]
+        F --&gt; FScore[0-100]
+    end
+    
+    WScore --&gt; Total[Total Score]
+    IScore --&gt; Total
+    NScore --&gt; Total
+    FScore --&gt; Total
+    
+    Total --&gt; Level{Risk Level}
+    Level --&gt;|≤30| Low[🟢 Low]
+    Level --&gt;|≤60| Medium[🟡 Medium]
+    Level --&gt;|&gt;60| High[🔴 High]
+</code></pre>
+<p><strong>Detail Formula</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Sumber Data</th>
+<th>Metrik</th>
+<th>Range Skor</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Weather</td>
+<td>Open-Meteo API</td>
+<td>Weather code + suhu + angin</td>
+<td>10 – 95</td>
+</tr>
+<tr>
+<td>Inflation</td>
+<td>World Bank API</td>
+<td>Tingkat inflasi tahunan</td>
+<td>10 – 90</td>
+</tr>
+<tr>
+<td>News</td>
+<td>GNews API</td>
+<td>Sentiment analysis (Positive=20, Neutral=50, Negative=75, Crisis=95)</td>
+<td>20 – 95</td>
+</tr>
+<tr>
+<td>FX Rate</td>
+<td>ExchangeRate API</td>
+<td>Coefficient of Variation 30 hari</td>
+<td>15 – 85</td>
+</tr>
+</tbody></table>
+<p><strong>Weather Score Detail</strong>:</p>
+<ul>
+<li>Clear: 10 → Cloudy: 25 → Fog: 40 → Light rain: 50 → Heavy rain: 70 → Snow: 75 → Storm: 85 → Thunderstorm: 95</li>
+<li>+15 jika suhu &lt;0°C atau &gt;40°C</li>
+<li>+25 jika angin &gt;50 km/h</li>
+</ul>
+<p><strong>Inflation Score Detail</strong>:</p>
+<ul>
+<li>&lt;2%: 10 → ≤4%: 25 → ≤6%: 50 → ≤8%: 75 → &gt;8%: 90</li>
+<li>+20 jika tren naik &gt;5% YoY</li>
+<li>-15 jika tren turun &gt;5% YoY</li>
+</ul>
+<p><strong>FX Score Detail</strong>:</p>
+<ul>
+<li>CV &lt;1%: 15 → ≤2%: 30 → ≤3%: 50 → ≤5%: 70 → &gt;5%: 85</li>
+<li>+15 jika depresiasi &gt;5%</li>
+<li>-10 jika apresiasi &gt;5%</li>
+</ul>
+<hr>
+<h2>6. Database</h2>
+<pre><code class="language-mermaid">erDiagram
+    countries ||--o{ risk_scores : has
+    countries ||--o{ news_cache : has
+    countries ||--o{ watchlists : has
+    users ||--o{ watchlists : has
+    
+    countries {
+        int id PK
+        string name
+        string iso_code UK
+        string iso_code_3 UK
+        string currency_code
+        string region
+        string language
+        float gdp
+        float inflation
+        bigint population
+        float exports
+        float imports
+    }
+    
+    risk_scores {
+        int id PK
+        int country_id FK
+        int weather_risk
+        int inflation_risk
+        int news_sentiment_risk
+        int currency_risk
+        int total_score
+        string risk_level
+        datetime calculated_at
+    }
+    
+    news_cache {
+        int id PK
+        int country_id FK
+        string title
+        text description
+        string source
+        string url
+        datetime published_at
+        string sentiment
+    }
+    
+    ports {
+        int id PK
+        string name
+        string country
+        string country_code
+        float latitude
+        float longitude
+        string port_type
+    }
+    
+    watchlists {
+        int id PK
+        int user_id FK
+        int country_id FK
+        timestamp created_at
+        UNIQUE(user_id, country_id)
+    }
+    
+    users {
+        int id PK
+        string name
+        string email UK
+        string password
+        boolean is_admin
+    }
+    
+    positive_words {
+        int id PK
+        string word UK
+    }
+    
+    negative_words {
+        int id PK
+        string word UK
+        string category
+    }
+    
+    vessels {
+        int id PK
+        int mmsi UK
+        int imo
+        string name
+        string vessel_type
+        string flag_country
+        float latitude
+        float longitude
+        float speed
+        int course
+        int heading
+        string destination
+        string nav_status
+        boolean is_tracked
+        datetime last_updated
+    }
+    
+    articles {
+        int id PK
+        string title
+        text content
+        string author
+        date published_at
+    }
+</code></pre>
+<hr>
+<h2>7. API Endpoints</h2>
+<h3>Web API (JSON)</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Controller</th>
+<th>Deskripsi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td><code>/api/countries</code></td>
+<td>CountryController@index</td>
+<td>Daftar semua negara (cache 1 jam)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/countries/{id}</code></td>
+<td>CountryController@show</td>
+<td>Detail negara + cuaca + data ekonomi</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/risk</code></td>
+<td>RiskController@index</td>
+<td>Skor risiko (dengan filter country_id)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/ports</code></td>
+<td>PortController@index</td>
+<td>Daftar pelabuhan (paginate 50)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/news</code></td>
+<td>NewsController@index</td>
+<td>Berita (dengan filter keyword &amp; country_id)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/currency</code></td>
+<td>CurrencyController@index</td>
+<td>Nilai tukar (dengan parameter base)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/viz/gdp</code></td>
+<td>VizController@gdp</td>
+<td>Series GDP 10 tahun</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/viz/inflation</code></td>
+<td>VizController@inflation</td>
+<td>Series inflasi 10 tahun</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/viz/currency</code></td>
+<td>VizController@currency</td>
+<td>Series nilai tukar 90 hari</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/viz/risk</code></td>
+<td>VizController@risk</td>
+<td>Series risiko 12 bulan</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/watchlist</code></td>
+<td>WatchlistController@index</td>
+<td>Daftar watchlist user</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/watchlist</code></td>
+<td>WatchlistController@store</td>
+<td>Tambah ke watchlist</td>
+</tr>
+<tr>
+<td>DELETE</td>
+<td><code>/api/watchlist/{countryId}</code></td>
+<td>WatchlistController@destroy</td>
+<td>Hapus dari watchlist</td>
+</tr>
+</tbody></table>
+<h3>Port Map API</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Deskripsi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GET</td>
+<td><code>/api/portmap/ports</code></td>
+<td>Semua pelabuhan (dengan filter country)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/portmap/vessels</code></td>
+<td>Semua kapal (dengan filter type)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/portmap/search-vessels</code></td>
+<td>Cari kapal (by name/MMSI/IMO)</td>
+</tr>
+<tr>
+<td>GET</td>
+<td><code>/api/portmap/vessel-position/{mmsi}</code></td>
+<td>Posisi kapal spesifik</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/portmap/track-vessel/{mmsi}</code></td>
+<td>Track kapal</td>
+</tr>
+<tr>
+<td>POST</td>
+<td><code>/api/portmap/untrack-vessel/{mmsi}</code></td>
+<td>Untrack kapal</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>8. External APIs</h2>
+<table>
+<thead>
+<tr>
+<th>API</th>
+<th>Data yang Diambil</th>
+<th>API Key</th>
+<th>Biaya</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Open-Meteo</strong></td>
+<td>Cuaca (suhu, presipitasi, angin, kode cuaca)</td>
+<td>Tidak perlu</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>World Bank</strong></td>
+<td>GDP, inflasi, populasi, ekspor, impor</td>
+<td>Tidak perlu</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>REST Countries</strong></td>
+<td>Info negara (iso code, region, currency)</td>
+<td>✅ Perlu (free tier)</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>ExchangeRate</strong></td>
+<td>Kurs real-time</td>
+<td>✅ Perlu (free tier)</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>GNews</strong></td>
+<td>Berita ekonomi &amp; logistik</td>
+<td>✅ Perlu (free tier)</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>AISStream.io</strong></td>
+<td>Posisi kapal real-time</td>
+<td>✅ Perlu (free tier)</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>VesselFinder</strong></td>
+<td>Data kapal alternatif</td>
+<td>✅ Perlu (free tier)</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>DataDocked</strong></td>
+<td>Data kapal alternatif</td>
+<td>✅ Perlu (free tier)</td>
+<td>Gratis</td>
+</tr>
+<tr>
+<td><strong>MarineTraffic</strong></td>
+<td>Peta navigasi (iframe embed)</td>
+<td>Tidak perlu</td>
+<td>Gratis</td>
+</tr>
+</tbody></table>
+<hr>
+<h2>Tech Stack</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Teknologi</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Backend</strong></td>
+<td>PHP 8.2, Laravel 12</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>MySQL</td>
+</tr>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>Bootstrap 5, Vanilla JS (ES6 + AJAX)</td>
+</tr>
+<tr>
+<td><strong>Build Tool</strong></td>
+<td>Vite 7</td>
+</tr>
+<tr>
+<td><strong>Charts</strong></td>
+<td>Chart.js</td>
+</tr>
+<tr>
+<td><strong>Maps</strong></td>
+<td>Leaflet.js + OpenStreetMap</td>
+</tr>
+<tr>
+<td><strong>Icons</strong></td>
+<td>Bootstrap Icons</td>
+</tr>
+</tbody></table>
+<hr>
+<p><em>Dokumentasi ini dibuat pada Juli 2026 untuk Platform Monitoring Risiko Rantai Pasok Global.</em></p>
+
+
+</body>
+</html>
