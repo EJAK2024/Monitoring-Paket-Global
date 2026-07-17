@@ -35,6 +35,18 @@
             <div class="stat-value">{{ $articleCount }}</div>
         </div>
     </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-center">
+            <div class="stat-label">Suppliers</div>
+            <div class="stat-value">{{ $supplierCount }}</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card text-center">
+            <div class="stat-label">Containers</div>
+            <div class="stat-value">{{ $containerCount }}</div>
+        </div>
+    </div>
 </div>
 
 <div class="row g-3">
@@ -46,6 +58,8 @@
                     <a href="{{ route('admin.ports') }}" class="btn btn-outline-primary">Manage Ports</a>
                     <a href="{{ route('admin.articles') }}" class="btn btn-outline-primary">Manage Articles</a>
                     <a href="{{ route('admin.users') }}" class="btn btn-outline-primary">Manage Users</a>
+                    <a href="{{ route('admin.suppliers') }}" class="btn btn-outline-primary">Manage Suppliers</a>
+                    <a href="{{ route('admin.containers') }}" class="btn btn-outline-primary">Manage Containers</a>
                 </div>
             </div>
         </div>

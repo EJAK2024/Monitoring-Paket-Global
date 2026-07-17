@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PortMapController;
 use App\Models\Country;
+use App\Models\Supplier;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -13,6 +14,18 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return view('dashboard.index', ['countries' => Country::all()]);
 })->name('dashboard');
+
+Route::get('/supplier-risk', function () {
+    return view('supplier.index', ['suppliers' => Supplier::with('country')->orderBy('name')->get()]);
+})->name('supplier.risk');
+
+Route::get('/container-tracking', function () {
+    return view('container.index');
+})->name('container.tracking');
+
+Route::get('/alerts', function () {
+    return view('alert.index');
+})->name('alerts');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -52,6 +65,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'admin'])->group(fun
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users', [AdminController::class, 'storeUser'])->name('users.store');
     Route::delete('/users/{user}', [AdminController::class, 'destroyUser'])->name('users.destroy');
+    Route::get('/suppliers', [AdminController::class, 'suppliers'])->name('suppliers');
+    Route::post('/suppliers', [AdminController::class, 'storeSupplier'])->name('suppliers.store');
+    Route::delete('/suppliers/{supplier}', [AdminController::class, 'destroySupplier'])->name('suppliers.destroy');
+    Route::get('/containers', [AdminController::class, 'containers'])->name('containers');
+    Route::delete('/containers/{container}', [AdminController::class, 'destroyContainer'])->name('containers.destroy');
 });
 
 Route::fallback(function () {

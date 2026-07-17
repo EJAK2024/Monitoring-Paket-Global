@@ -16,6 +16,8 @@ class DatabaseSeeder extends Seeder
             PositiveWordSeeder::class,
             NegativeWordSeeder::class,
             NewsCacheSeeder::class,
+            SupplierSeeder::class,
+            ContainerSeeder::class,
         ]);
 
         User::factory()->create([

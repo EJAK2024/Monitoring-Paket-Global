@@ -66,6 +66,16 @@
                 <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
                     <i class="bi bi-grid"></i> Global Country Dashboard
                 </a>
+                <a class="nav-link {{ request()->routeIs('supplier.risk') ? 'active' : '' }}" href="{{ route('supplier.risk') }}">
+                    <i class="bi bi-truck"></i> Supplier Risk Scoring
+                </a>
+                <a class="nav-link {{ request()->routeIs('container.tracking') ? 'active' : '' }}" href="{{ route('container.tracking') }}">
+                    <i class="bi bi-box-seam"></i> Container Tracking
+                </a>
+                <a class="nav-link {{ request()->routeIs('alerts') ? 'active' : '' }}" href="{{ route('alerts') }}">
+                    <i class="bi bi-bell"></i> Alerts
+                    <span id="navAlertBadge" class="badge bg-danger ms-auto" style="display: none;">0</span>
+                </a>
                 <a class="nav-link {{ request()->routeIs('watchlist') ? 'active' : '' }}" href="{{ route('watchlist') }}">
                     <i class="bi bi-star"></i> Favorite Monitoring List
                 </a>
@@ -88,6 +98,26 @@
         </div>
     </div>
     @yield('scripts')
+    <script>
+        function nav_refreshBadge() {
+            fetch('/api/alerts/unread-count')
+                .then(r => r.json())
+                .then(d => {
+                    const badge = document.getElementById('navAlertBadge');
+                    if (d.count > 0) {
+                        badge.textContent = d.count;
+                        badge.style.display = 'inline';
+                    } else {
+                        badge.style.display = 'none';
+                    }
+                })
+                .catch(() => {});
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            nav_refreshBadge();
+            setInterval(nav_refreshBadge, 30000);
+        });
+    </script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

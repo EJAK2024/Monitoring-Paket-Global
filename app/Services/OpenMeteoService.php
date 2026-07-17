@@ -15,55 +15,56 @@ class OpenMeteoService implements WeatherServiceInterface
 
     public function getWeather(string $city): ?array
     {
-        $cacheKey = 'weather.' . strtolower(str_replace(' ', '_', $city));
-        return Cache::remember($cacheKey, 1800, function () use ($city) {
-        $coords = self::FALLBACK_COORDS[$city] ?? null;
+        $cacheKey = 'weather.'.strtolower(str_replace(' ', '_', $city));
 
-        if ($coords) {
-            $lat = $coords['latitude'];
-            $lon = $coords['longitude'];
-        } else {
+        return Cache::remember($cacheKey, 1800, function () use ($city) {
+            $coords = self::FALLBACK_COORDS[$city] ?? null;
+
+            if ($coords) {
+                $lat = $coords['latitude'];
+                $lon = $coords['longitude'];
+            } else {
+                try {
+                    $geo = Http::timeout(10)->get('https://geocoding-api.open-meteo.com/v1/search', [
+                        'name' => $city,
+                        'count' => 1,
+                        'language' => 'en',
+                        'format' => 'json',
+                    ])->json();
+                } catch (\Exception $e) {
+                    Log::warning("OpenMeteo geocoding failed for {$city}: {$e->getMessage()}");
+
+                    return null;
+                }
+
+                if (empty($geo['results'][0])) {
+                    return null;
+                }
+
+                $lat = $geo['results'][0]['latitude'];
+                $lon = $geo['results'][0]['longitude'];
+            }
+
             try {
-                $geo = Http::timeout(10)->get('https://geocoding-api.open-meteo.com/v1/search', [
-                    'name' => $city,
-                    'count' => 1,
-                    'language' => 'en',
-                    'format' => 'json',
+                $weather = Http::timeout(10)->get('https://api.open-meteo.com/v1/forecast', [
+                    'latitude' => $lat,
+                    'longitude' => $lon,
+                    'current' => 'temperature_2m,precipitation,wind_speed_10m,weather_code',
+                    'timezone' => 'auto',
                 ])->json();
             } catch (\Exception $e) {
-                Log::warning("OpenMeteo geocoding failed for {$city}: {$e->getMessage()}");
+                Log::warning("OpenMeteo forecast failed for {$city} ({$lat},{$lon}): {$e->getMessage()}");
 
                 return null;
             }
 
-            if (empty($geo['results'][0])) {
+            $current = $weather['current'] ?? null;
+
+            if (! $current) {
                 return null;
             }
 
-            $lat = $geo['results'][0]['latitude'];
-            $lon = $geo['results'][0]['longitude'];
-        }
-
-        try {
-            $weather = Http::timeout(10)->get('https://api.open-meteo.com/v1/forecast', [
-                'latitude' => $lat,
-                'longitude' => $lon,
-                'current' => 'temperature_2m,precipitation,wind_speed_10m,weather_code',
-                'timezone' => 'auto',
-            ])->json();
-        } catch (\Exception $e) {
-            Log::warning("OpenMeteo forecast failed for {$city} ({$lat},{$lon}): {$e->getMessage()}");
-
-            return null;
-        }
-
-        $current = $weather['current'] ?? null;
-
-        if (! $current) {
-            return null;
-        }
-
-        return $this->enrich($current);
+            return $this->enrich($current);
         });
     }
 

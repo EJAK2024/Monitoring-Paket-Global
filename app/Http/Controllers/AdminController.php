@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Article;
+use App\Models\Container;
 use App\Models\Country;
 use App\Models\Port;
+use App\Models\Supplier;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -19,7 +21,60 @@ class AdminController extends Controller
             'countryCount' => Country::count(),
             'portCount' => Port::count(),
             'articleCount' => Article::count(),
+            'supplierCount' => Supplier::count(),
+            'containerCount' => Container::count(),
         ]);
+    }
+
+    public function suppliers()
+    {
+        return view('admin.suppliers', [
+            'suppliers' => Supplier::with('country')->latest()->get(),
+            'countries' => Country::orderBy('name')->get(),
+        ]);
+    }
+
+    public function storeSupplier(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'country_id' => 'required|exists:countries,id',
+            'contact_email' => 'nullable|email|max:255',
+            'contact_phone' => 'nullable|string|max:50',
+            'category' => 'nullable|string|max:100',
+            'reliability_score' => 'nullable|integer|min:0|max:100',
+            'on_time_delivery_pct' => 'nullable|numeric|min:0|max:100',
+            'quality_rating' => 'nullable|integer|min:0|max:100',
+            'lead_time_days' => 'nullable|integer|min:0',
+            'certification' => 'nullable|string|max:255',
+            'status' => 'nullable|string|in:active,suspended,inactive',
+            'notes' => 'nullable|string',
+        ]);
+
+        Supplier::create($validated);
+
+        return redirect()->route('admin.suppliers')->with('success', 'Supplier berhasil ditambahkan.');
+    }
+
+    public function destroySupplier(Supplier $supplier)
+    {
+        $supplier->delete();
+
+        return redirect()->route('admin.suppliers')->with('success', 'Supplier berhasil dihapus.');
+    }
+
+    public function containers()
+    {
+        return view('admin.containers', [
+            'containers' => Container::with('vessel')->latest()->paginate(20),
+        ]);
+    }
+
+    public function destroyContainer(Container $container)
+    {
+        $container->delete();
+
+        return redirect()->route('admin.containers')->with('success', 'Container berhasil dihapus.');
     }
 
     public function ports()
