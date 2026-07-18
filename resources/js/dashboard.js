@@ -595,8 +595,8 @@ function dash_toggleWatchlist() {
 
     dash_getWatchlistIds().then(ids => {
         const isIn = ids.includes(dash_selectedId);
-        const url = `/api/watchlist/${dash_selectedId}`;
         const method = isIn ? 'DELETE' : 'POST';
+        const url = isIn ? `/api/watchlist/${dash_selectedId}` : '/api/watchlist';
         const body = isIn ? null : JSON.stringify({ country_id: dash_selectedId });
 
         fetch(url, {
