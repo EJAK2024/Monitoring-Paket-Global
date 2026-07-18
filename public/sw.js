@@ -1,7 +1,7 @@
-const CACHE_NAME = 'supply-chain-v5';
+const CACHE_NAME = 'supply-chain-v6';
 const CACHE_EXPIRY = 30 * 60 * 1000;
 
-const EXCLUDE_FROM_CACHE = ['/portmap', '/admin', '/login', '/dashboard'];
+const EXCLUDE_FROM_CACHE = ['/portmap', '/admin', '/login', '/dashboard', '/watchlist'];
 
 const PRECACHE_URLS = [
     '/',

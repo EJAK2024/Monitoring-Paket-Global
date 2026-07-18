@@ -590,8 +590,16 @@ function dash_getWatchlistIds() {
 }
 
 function dash_toggleWatchlist() {
-    if (!dash_selectedId) return;
-    const token = document.querySelector('meta[name="csrf-token"]').content;
+    if (!dash_selectedId) {
+        showToast('Select a country first', 'warning');
+        return;
+    }
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
 
     dash_getWatchlistIds().then(ids => {
         const isIn = ids.includes(dash_selectedId);
@@ -608,11 +616,27 @@ function dash_toggleWatchlist() {
             },
             body,
         })
-            .then(() => {
+            .then(r => {
+                if (r.status === 401) {
+                    window.location.href = '/login';
+                    return;
+                }
+                if (!r.ok) throw new Error('Request failed');
+                return r.json();
+            })
+            .then(data => {
+                if (!data) return;
+                if (method === 'POST') {
+                    showToast(dash_selectedName + ' added to Watchlist', 'success');
+                } else {
+                    showToast(dash_selectedName + ' removed from Watchlist', 'danger');
+                }
                 dash_updateWatchlistBtn();
                 dash_renderWatchlist();
             })
-            .catch(() => {});
+            .catch(() => {
+                showToast('Failed to update watchlist', 'danger');
+            });
     });
 }
 
@@ -664,7 +688,11 @@ function dash_renderWatchlist() {
 }
 
 function dash_removeWatchlist(id) {
-    const token = document.querySelector('meta[name="csrf-token"]').content;
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
     fetch(`/api/watchlist/${id}`, {
         method: 'DELETE',
         headers: {
@@ -672,11 +700,26 @@ function dash_removeWatchlist(id) {
             'Accept': 'application/json',
         },
     })
+        .then(r => {
+            if (r.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            if (!r.ok) throw new Error('Failed');
+            return r.json();
+        })
         .then(() => {
+            showToast('Removed from Watchlist', 'danger');
             dash_updateWatchlistBtn();
             dash_renderWatchlist();
         })
-        .catch(() => {});
+        .catch(() => {
+            showToast('Failed to remove from watchlist', 'danger');
+        });
 }
 
 document.addEventListener('DOMContentLoaded', dash_renderWatchlist);
+
+window.dash_toggleWatchlist = dash_toggleWatchlist;
+window.dash_removeWatchlist = dash_removeWatchlist;
+window.dash_loadNews = dash_loadNews;

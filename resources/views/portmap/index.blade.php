@@ -5,14 +5,14 @@
 @section('content')
 <style>
     .content { padding: 0 !important; }
-    #sidebar { width: 380px; will-change: width; border-right: 1px solid rgba(0,0,0,0.06); transition: width 0.3s ease; color: #212529; background: #fff; }
+    #sidebar { width: 380px; will-change: width; border-right: 1px solid rgb(248, 240, 240); transition: width 0.3s ease; color: #fefefe; background: #fff; }
     @media (max-width: 768px) { #sidebar { width: 100%; } }
-    .vessel-item:hover, .port-item:hover { background: #f0f4ff; }
+    .vessel-item:hover, .port-item:hover { background: #0909098e; }
     .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
     .status-dot.active { background: #198754; }
     .status-dot.inactive { background: #dc3545; }
-    .status-dot.unknown { background: #6c757d; }
-    .ship-panel-card { background: rgba(255,255,255,0.97); backdrop-filter: blur(8px); }
+    .status-dot.unknown { background: #e71b1b; }
+    .ship-panel-card { background: rgba(99, 96, 96, 0.97); backdrop-filter: blur(8px); }
     .sidebar-collapsed #sidebar { width: 52px !important; min-width: 52px; }
     .sidebar-collapsed #sidebar .sidebar-header > div:first-child > div,
     .sidebar-collapsed #sidebar .sidebar-header > div:first-child > .badge,
@@ -23,19 +23,22 @@
     .sidebar-collapsed #sidebar .sidebar-header #sidebarToggleBtn { position: absolute; top: 0.5rem; right: 0.25rem; }
     #sidebarOpenBtn { display: none !important; }
     #sidebarToggleBtn { transition: all 0.25s ease; }
-    #sidebarToggleBtn:hover { background: rgba(255,255,255,0.25) !important; }
+    #sidebarToggleBtn:hover { background: rgba(241, 240, 240, 0.25) !important; }
     #sidebarToggleBtn .bi { transition: transform 0.35s ease; }
-    .sidebar-header { background: linear-gradient(135deg, #1a1040 0%, #2a1a5e 100%); color: #fff; }
-    #sidebarTabs { border-bottom: 1px solid #dee2e6; background: #f8f9fc; }
-    #sidebarTabs .nav-link { border: none !important; color: #495057; padding: 0.5rem 0.8rem; font-size: 0.75rem; transition: all 0.2s; position: relative; }
+    .sidebar-header { background: linear-gradient(135deg, #1a1040 0%, #7559d3 100%); color: #f9f9f9; }
+    #sidebarTabs { border-bottom: 1px solid #007ffe; background: #1d3c9b; }
+    #sidebarTabs .nav-link { border: none !important; color: #000305; padding: 0.5rem 0.8rem; font-size: 0.75rem; transition: all 0.2s; position: relative; }
     #sidebarTabs .nav-link:hover { color: #0d6efd; background: rgba(13,110,253,0.06); border-radius: 4px 4px 0 0; }
-    #sidebarTabs .nav-link.active { color: #0d6efd; background: #fff; border-radius: 4px 4px 0 0; font-weight: 600; }
-    #sidebarTabs .nav-link.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 60%; height: 2px; background: #0d6efd; border-radius: 1px; }
-    .tab-content { background: #fff; border-top: none; }
-    .panel-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #343a40; }
+    #sidebarTabs .nav-link.active { color: #0d6efd; background:#0d6efd;; border-radius: 4px 4px 0 0; font-weight: 600; }
+    #sidebarTabs .nav-link.active::after { content: ''; position: absolute; bottom: -1px; left: 50%; transform: translateX(-50%); width: 60%; height: 2px; background: #3465ae; border-radius: 1px; }
+    .tab-content { background: #05055d; border-top: none; }
+    .panel-section-title { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: #ffffff; }
+    #portSearch, #portTypeFilter { color: #ffffff !important; background: rgba(255,255,255,0.1) !important; border-color: rgba(255,255,255,0.3) !important; }
+    #portSearch::placeholder { color: rgba(255,255,255,0.5) !important; }
+    #portSearch option, #portTypeFilter option { color: #000000; background: #ffffff; }
     .sidebar-list { max-height: 320px; overflow-y: auto; }
     .sidebar-list::-webkit-scrollbar { width: 4px; }
-    .sidebar-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    .sidebar-list::-webkit-scrollbar-thumb { background: #000000; border-radius: 4px; }
 </style> 
 <div class="position-relative" style="height: 100vh;">
     <iframe
@@ -84,10 +87,10 @@
             </li>
         </ul>
 
-        <div class="tab-content flex-grow-1 overflow-auto" style="font-size:0.85rem;">
+        <div class="tab-content flex-grow-2 overflow-auto" style="font-size:0.85rem;">
             <div class="tab-pane fade show active p-2" id="panel-search" role="tabpanel">
                 <div class="panel-section-title mb-1"><i class="bi bi-search me-1"></i>Port Search</div>
-                <input type="text" id="portSearch" class="form-control form-control-sm mb-1" placeholder="Search port or country...">
+                <input type="text" id="portSearch" class="form-control form-control-sm mb-2" placeholder="Search port or country...">
                 <select id="portTypeFilter" class="form-select form-select-sm mb-1">
                     <option value="">All port types</option>
                     @foreach ($portTypes as $type)
@@ -112,7 +115,7 @@
             <div class="tab-pane fade p-2" id="panel-ports" role="tabpanel">
                 <div class="d-flex align-items-center justify-content-between mb-1">
                     <span class="panel-section-title"><i class="bi bi-building me-1"></i>Port Directory</span>
-                    <span id="portCount2" class="badge bg-primary rounded-pill">0</span>
+                    <span id="portCount2" class="badge rounded-pill" style="background:rgba(255,255,255,0.2);color:#fff;">0</span>
                 </div>
                 <select id="portTypeFilter2" class="form-select form-select-sm mb-1">
                     <option value="">All types</option>
@@ -128,7 +131,7 @@
             <div class="tab-pane fade p-2" id="panel-vessels" role="tabpanel">
                 <div class="d-flex align-items-center justify-content-between mb-1">
                     <span class="panel-section-title"><i class="bi bi-ship me-1"></i>Active Vessels</span>
-                    <span id="shipCount2" class="badge bg-success rounded-pill">0</span>
+                    <span id="shipCount2" class="badge rounded-pill" style="background:rgba(255,255,255,0.2);color:#fff;">0</span>
                 </div>
                 <div class="d-flex gap-1 mb-1">
                     <select id="vesselTypeFilter" class="form-select form-select-sm flex-grow-1">

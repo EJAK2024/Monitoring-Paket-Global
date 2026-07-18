@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\Api\WatchlistController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PortMapController;
 use App\Models\Country;
@@ -34,9 +35,16 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout']);
 
-Route::get('/watchlist', function () {
-    return view('watchlist.index', ['countries' => Country::all()]);
-})->name('watchlist');
+Route::middleware('auth')->group(function () {
+    Route::get('/watchlist', function () {
+        return view('watchlist.index', ['countries' => Country::all()]);
+    })->name('watchlist');
+
+    Route::post('/api/watchlist', [WatchlistController::class, 'store'])->name('api.watchlist.store');
+    Route::delete('/api/watchlist/{countryId}', [WatchlistController::class, 'destroy'])->name('api.watchlist.destroy');
+});
+
+Route::get('/api/watchlist', [WatchlistController::class, 'index'])->name('api.watchlist.index');
 
 Route::get('/currency', function () {
     return view('currency.index', ['countries' => Country::all()]);

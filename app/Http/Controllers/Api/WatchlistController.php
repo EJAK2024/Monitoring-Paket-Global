@@ -8,14 +8,20 @@ use Illuminate\Http\Request;
 
 class WatchlistController extends Controller
 {
-    private function getUserId(): int
+    private function getUserId(): ?int
     {
-        return auth()->id() ?? 1;
+        return auth()->id();
     }
 
     public function index()
     {
-        $items = Watchlist::where('user_id', $this->getUserId())
+        $userId = auth()->id();
+
+        if (! $userId) {
+            return response()->json([]);
+        }
+
+        $items = Watchlist::where('user_id', $userId)
             ->with('country')
             ->get()
             ->pluck('country');

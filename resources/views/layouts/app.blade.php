@@ -118,6 +118,23 @@
             setInterval(nav_refreshBadge, 30000);
         });
     </script>
+    <div id="toastContainer" style="position:fixed;top:1rem;right:1rem;z-index:9999;"></div>
+    <script>
+        function showToast(message, type) {
+            type = type || 'success';
+            var colors = { success: '#198754', danger: '#dc3545', warning: '#ffc107', info: '#0dcaf0' };
+            var bg = colors[type] || colors.success;
+            var toast = document.createElement('div');
+            toast.style.cssText = 'background:' + bg + ';color:#fff;padding:0.75rem 1.25rem;border-radius:0.5rem;margin-bottom:0.5rem;box-shadow:0 4px 12px rgba(0,0,0,0.15);font-size:0.9rem;opacity:0;transition:opacity 0.3s;';
+            toast.textContent = message;
+            document.getElementById('toastContainer').appendChild(toast);
+            setTimeout(function() { toast.style.opacity = '1'; }, 10);
+            setTimeout(function() {
+                toast.style.opacity = '0';
+                setTimeout(function() { toast.remove(); }, 300);
+            }, 3000);
+        }
+    </script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

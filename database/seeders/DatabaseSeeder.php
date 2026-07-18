@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             NewsCacheSeeder::class,
             SupplierSeeder::class,
             ContainerSeeder::class,
+            AdminUserSeeder::class,
         ]);
 
         User::factory()->create([

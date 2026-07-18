@@ -37,33 +37,58 @@ function addToWatchlist() {
     const id = parseInt(document.getElementById('addCountry').value);
     if (!id) return;
 
+    const name = document.getElementById('addCountry').options[document.getElementById('addCountry').selectedIndex].text;
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
     fetch('/api/watchlist', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-CSRF-TOKEN': token,
             'Accept': 'application/json',
         },
         body: JSON.stringify({ country_id: id }),
     })
-        .then(r => r.json())
+        .then(r => {
+            if (r.status === 401) { window.location.href = '/login'; return; }
+            if (!r.ok) throw new Error('Failed');
+            return r.json();
+        })
         .then(() => {
+            if (typeof showToast === 'function') showToast(name + ' added to Watchlist', 'success');
             document.getElementById('addCountry').value = '';
             loadWatchlist();
         })
-        .catch(() => {});
+        .catch(() => {
+            if (typeof showToast === 'function') showToast('Failed to add to watchlist', 'danger');
+        });
 }
 
 function removeFromWatchlist(id) {
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+
     fetch(`/api/watchlist/${id}`, {
         method: 'DELETE',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-CSRF-TOKEN': token,
             'Accept': 'application/json',
         },
     })
-        .then(() => loadWatchlist())
-        .catch(() => {});
+        .then(r => {
+            if (r.status === 401) { window.location.href = '/login'; return; }
+            if (!r.ok) throw new Error('Failed');
+            return r.json();
+        })
+        .then(() => {
+            if (typeof showToast === 'function') showToast('Removed from Watchlist', 'danger');
+            loadWatchlist();
+        })
+        .catch(() => {
+            if (typeof showToast === 'function') showToast('Failed to remove from watchlist', 'danger');
+        });
 }
 
 document.addEventListener('DOMContentLoaded', loadWatchlist);
+
+window.addToWatchlist = addToWatchlist;
+window.removeFromWatchlist = removeFromWatchlist;
