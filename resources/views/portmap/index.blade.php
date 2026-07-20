@@ -48,6 +48,7 @@
         allowfullscreen
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         title="Marine Traffic Live Map">
     </iframe>
 
@@ -178,18 +179,20 @@
                 </div>
                 <hr class="my-2">
                 <div class="row g-1 small">
-                    <div class="col-6"><span style="font-size:12px;color:#0d6efd;">▷</span> Container vessel</div>
-                    <div class="col-6"><span style="font-size:12px;color:#dc3545;">◇</span> Tanker</div>
-                    <div class="col-6"><span style="font-size:12px;color:#198754;">◁</span> Bulk carrier</div>
-                    <div class="col-6"><span style="font-size:12px;color:#0dcaf0;">○</span> LNG carrier</div>
+                    <div class="col-6"><span style="font-size:12px;color:#0d6efd;">&#9655;</span> Container vessel</div>
+                    <div class="col-6"><span style="font-size:12px;color:#dc3545;">&#9671;</span> Tanker</div>
+                    <div class="col-6"><span style="font-size:12px;color:#198754;">&#9665;</span> Bulk carrier</div>
+                    <div class="col-6"><span style="font-size:12px;color:#0dcaf0;">&#9675;</span> LNG carrier</div>
                     <div class="col-12 mt-1"><span style="font-size:12px;">- - -</span> Trade route</div>
                 </div>
             </div>
         </div>
 
-        <div class="d-flex align-items-center justify-content-between px-2 py-1 border-top small text-muted" style="background:#f8f9fc;">
-            <a href="{{ route('dashboard') }}" class="text-decoration-none text-secondary"><i class="bi bi-arrow-left"></i> Dashboard</a>
-            <span id="sidebarFooterInfo">Initializing...</span>
+        <div class="d-flex align-items-center justify-content-end px-2 py-1 border-top small" style="background:#f8f9fc;">
+            <a id="openMTBtn" href="https://www.marinetraffic.com/en/ais/embed/zoom:3/centery:20/centerx:30/maptype:0/shownames:false/showmenu:false/remember:false" target="_blank" rel="noopener"
+               class="text-decoration-none d-flex align-items-center gap-1" style="font-size:0.72rem;color:#6c757d;" title="Buka di MarineTraffic">
+                <i class="bi bi-box-arrow-up-right"></i> MarineTraffic
+            </a>
         </div>
     </div>
 
@@ -197,32 +200,15 @@
         <i class="bi bi-arrow-bar-right"></i>
     </button>
 
-    <div id="shipPanel" class="position-absolute bottom-0 end-0 p-3" style="z-index: 1030; display: none;">
+    <div id="locationInfoPanel" class="position-absolute bottom-0 end-0 p-3" style="z-index: 1030; display: none;">
         <div class="card shadow ship-panel-card" style="width: 280px;">
             <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center bg-primary text-white">
-                <span class="fw-semibold small"><i class="bi bi-ship"></i> <span id="shipPanelName">-</span></span>
-                <button class="btn btn-sm btn-outline-light py-0 px-1" onclick="closeShipPanel()">&times;</button>
+                <span class="fw-semibold small"><i class="bi bi-geo-alt"></i> <span id="locationInfoName">-</span></span>
+                <button class="btn btn-sm btn-outline-light py-0 px-1" onclick="closeLocationInfo()">&times;</button>
             </div>
             <div class="card-body py-2 px-3" style="font-size:0.85rem;">
-                <div class="row mb-1"><div class="col-5 text-muted">Type</div><div class="col-7" id="shipPanelType">-</div></div>
-                <div class="row mb-1"><div class="col-5 text-muted">Speed</div><div class="col-7" id="shipPanelSpeed">-</div></div>
-                <div class="row mb-1"><div class="col-5 text-muted">Heading</div><div class="col-7" id="shipPanelHeading">-</div></div>
-                <div class="row mb-1"><div class="col-5 text-muted">Route</div><div class="col-7" id="shipPanelRoute">-</div></div>
-                <div class="row mb-1"><div class="col-5 text-muted">Destination</div><div class="col-7" id="shipPanelDest">-</div></div>
-                <div class="row mb-1"><div class="col-5 text-muted">Status</div><div class="col-7" id="shipPanelStatus">-</div></div>
-                <div class="row mb-1" id="shipPanelMmsiRow" style="display:none;"><div class="col-5 text-muted">MMSI</div><div class="col-7" id="shipPanelMmsi">-</div></div>
-                <div class="row mb-1" id="shipPanelSourceRow" style="display:none;"><div class="col-5 text-muted">Source</div><div class="col-7" id="shipPanelSource">-</div></div>
-                <div class="mt-2 d-flex gap-2">
-                    <button class="btn btn-sm btn-primary" id="shipFollowBtn" onclick="toggleFollowShip()">
-                        <i class="bi bi-crosshair"></i> Follow
-                    </button>
-                    <button class="btn btn-sm btn-outline-info" id="shipRouteHighlightBtn" onclick="highlightShipRoute()">
-                        <i class="bi bi-signpost-2"></i> Route
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" id="shipUntrackBtn" onclick="untrackSelectedShip()" style="display:none;">
-                        <i class="bi bi-x-circle"></i> Untrack
-                    </button>
-                </div>
+                <div class="row mb-1"><div class="col-5 text-muted">Koordinat</div><div class="col-7" id="locationInfoCoords">-</div></div>
+                <div id="locationInfoExtra"></div>
             </div>
         </div>
     </div>
@@ -233,12 +219,28 @@
 <script>
 document.getElementById('sidebarStatus').textContent = 'Marine Traffic Embed';
 
-var mapFrame = document.getElementById('marineTrafficMap');
-var MT_BASE = 'https://www.marinetraffic.com/en/ais/embed';
+function showLocationInfo(name, lat, lng, extra) {
+    var panel = document.getElementById('locationInfoPanel');
+    if (!panel) return;
+    var dir = lat >= 0 ? 'N' : 'S';
+    var dirLng = lng >= 0 ? 'E' : 'W';
+    document.getElementById('locationInfoName').textContent = name;
+    document.getElementById('locationInfoCoords').textContent = Math.abs(lat).toFixed(4) + '\u00b0' + dir + ', ' + Math.abs(lng).toFixed(4) + '\u00b0' + dirLng;
+    document.getElementById('locationInfoExtra').innerHTML = extra || '';
+    panel.style.display = 'block';
+    updateMapCenter(lat, lng);
+}
 
-function navigateToPort(lat, lng, zoom) {
-    zoom = zoom || 12;
-    mapFrame.src = MT_BASE + '/zoom:' + zoom + '/centery:' + lat + '/centerx:' + lng + '/maptype:0/shownames:true/showmenu:false/remember:false';
+function updateMapCenter(lat, lng) {
+    var iframe = document.getElementById('marineTrafficMap');
+    if (iframe) {
+        iframe.src = 'https://www.marinetraffic.com/en/ais/embed/zoom:10/centery:' + lat + '/centerx:' + lng + '/maptype:0/shownames:true/showmenu:false/remember:false';
+    }
+}
+
+function closeLocationInfo() {
+    var panel = document.getElementById('locationInfoPanel');
+    if (panel) panel.style.display = 'none';
 }
 
 var sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -283,7 +285,7 @@ document.getElementById('portList').addEventListener('click', function(e) {
     if (!item) return;
     var lat = parseFloat(item.dataset.lat);
     var lng = parseFloat(item.dataset.lng);
-    if (!isNaN(lat) && !isNaN(lng)) navigateToPort(lat, lng, 12);
+    if (!isNaN(lat) && !isNaN(lng)) showLocationInfo(item.dataset.name, lat, lng, '<small class="text-muted">Port</small>');
 });
 
 document.getElementById('searchResults').addEventListener('click', function(e) {
@@ -291,7 +293,7 @@ document.getElementById('searchResults').addEventListener('click', function(e) {
     if (!btn) return;
     var lat = parseFloat(btn.dataset.lat);
     var lng = parseFloat(btn.dataset.lng);
-    if (!isNaN(lat) && !isNaN(lng)) navigateToPort(lat, lng, 12);
+    if (!isNaN(lat) && !isNaN(lng)) showLocationInfo(btn.dataset.name, lat, lng, '<small class="text-muted">Port</small>');
 });
 
 var searchTimeout = null;
@@ -318,8 +320,157 @@ fetch('/api/portmap/ports').then(function(r){return r.json();}).then(function(po
     loadPortList('');
 });
 
-document.getElementById('vesselUpdateInfo').textContent = 'Live data via Marine Traffic';
+document.getElementById('vesselUpdateInfo').textContent = 'Loading vessels...';
 document.getElementById('shipCount2').textContent = '-';
-document.getElementById('vesselList').innerHTML = '<div class="text-center text-muted py-3" style="font-size:0.8rem;">Vessels tracked via Marine Traffic embed</div>';
+
+function renderVesselItem(v) {
+    var typeColors = { container: '#0d6efd', tanker: '#dc3545', bulk: '#198754', lng: '#0dcaf0', passenger: '#6f42c1', cargo: '#fd7e14', other: '#6c757d' };
+    var color = typeColors[v.vessel_type] || '#6c757d';
+    var hasPos = v.latitude && v.longitude;
+    var typeLabels = { container: 'Container', tanker: 'Tanker', bulk: 'Bulk', lng: 'LNG', passenger: 'Passenger', cargo: 'Cargo', other: 'Other' };
+    var typeLabel = typeLabels[v.vessel_type] || v.vessel_type;
+
+    return '<div class="d-flex align-items-center justify-content-between py-1 px-2 border-bottom vessel-item" ' +
+        'style="cursor:pointer;border-left:3px solid ' + color + ';" ' +
+        'data-lat="' + (v.latitude || '') + '" data-lng="' + (v.longitude || '') + '" data-name="' + (v.name || '').replace(/"/g, '&quot;') + '">' +
+        '<div style="flex:1;min-width:0;">' +
+        '<div class="fw-semibold text-truncate" style="font-size:0.82rem;">' + v.name + '</div>' +
+        '<small class="text-muted" style="font-size:0.7rem;">' + (v.flag_country || '') + ' &middot; ' + typeLabel + '</small>' +
+        '</div>' +
+        '<div class="d-flex gap-1">' +
+        (hasPos ? '<button class="btn btn-sm btn-outline-primary py-0 px-1 vessel-goto-btn" style="font-size:0.7rem;" data-lat="' + v.latitude + '" data-lng="' + v.longitude + '" data-name="' + (v.name || '').replace(/"/g, '&quot;') + '" title="Show on map"><i class="bi bi-geo-alt"></i></button>' : '') +
+        '</div>' +
+        '</div>';
+}
+
+function loadVesselList(filter) {
+    fetch('/api/portmap/vessels').then(function(r){return r.json();}).then(function(data){
+        var vessels = data.live || data;
+        var filtered = vessels;
+        if (filter) {
+            filtered = vessels.filter(function(v){ return v.vessel_type === filter; });
+        }
+        document.getElementById('shipCount2').textContent = filtered.length;
+        document.getElementById('vesselList').innerHTML = filtered.map(renderVesselItem).join('');
+        document.getElementById('vesselUpdateInfo').textContent = filtered.length + ' vessels loaded';
+    }).catch(function(){
+        document.getElementById('vesselList').innerHTML = '<div class="text-center text-muted py-3" style="font-size:0.8rem;">Failed to load vessels</div>';
+    });
+}
+
+document.getElementById('vesselTypeFilter').addEventListener('change', function() {
+    loadVesselList(this.value);
+});
+
+document.getElementById('refreshVesselsBtn').addEventListener('click', function() {
+    loadVesselList(document.getElementById('vesselTypeFilter').value);
+});
+
+document.getElementById('vesselList').addEventListener('click', function(e) {
+    var gotoBtn = e.target.closest('.vessel-goto-btn');
+    if (gotoBtn) {
+        e.stopPropagation();
+        var lat = parseFloat(gotoBtn.dataset.lat);
+        var lng = parseFloat(gotoBtn.dataset.lng);
+        if (!isNaN(lat) && !isNaN(lng)) showLocationInfo(gotoBtn.dataset.name, lat, lng, '<small class="text-muted">Vessel</small>');
+        return;
+    }
+    var item = e.target.closest('.vessel-item');
+    if (item && item.dataset.lat && item.dataset.lng) {
+        var lat = parseFloat(item.dataset.lat);
+        var lng = parseFloat(item.dataset.lng);
+        if (!isNaN(lat) && !isNaN(lng)) showLocationInfo(item.dataset.name, lat, lng, '<small class="text-muted">Vessel</small>');
+    }
+});
+
+loadVesselList('');
+
+var vesselSearchDebounce = null;
+
+function searchVesselsLocal(query) {
+    var resultsDiv = document.getElementById('vesselSearchResults');
+    var statusDiv = document.getElementById('vesselSearchStatus');
+
+    if (!query || query.length < 2) {
+        resultsDiv.style.display = 'none';
+        statusDiv.style.display = 'none';
+        return;
+    }
+
+    statusDiv.style.display = 'block';
+    statusDiv.textContent = 'Searching...';
+
+    clearTimeout(vesselSearchDebounce);
+    vesselSearchDebounce = setTimeout(function() {
+        fetch('/api/portmap/search-vessels?q=' + encodeURIComponent(query) + '&limit=15')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.style.display = 'none';
+                    statusDiv.textContent = 'No vessels found';
+                    return;
+                }
+
+                statusDiv.textContent = data.results.length + ' results';
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = data.results.map(function(v) {
+                    var typeColors = { container: '#0d6efd', tanker: '#dc3545', bulk: '#198754', lng: '#0dcaf0' };
+                    var color = typeColors[v.vessel_type] || '#6c757d';
+                    var hasPos = v.latitude && v.longitude;
+                    var mtUrl = hasPos ? 'https://www.marinetraffic.com/en/ais/embed/zoom:10/centery:' + v.latitude + '/centerx:' + v.longitude + '/maptype:0/shownames:true/showmenu:false/remember:false' : '';
+
+                    return '<div class="list-group-item list-group-item-action py-2 px-2 vessel-search-item" style="cursor:pointer;border-left:3px solid ' + color + ';" ' +
+                        'data-lat="' + (v.latitude || '') + '" data-lng="' + (v.longitude || '') + '" data-name="' + (v.name || '').replace(/"/g, '&quot;') + '">' +
+                        '<div class="d-flex justify-content-between align-items-start">' +
+                        '<div style="flex:1;">' +
+                        '<div class="fw-semibold" style="font-size:0.82rem;">' + v.name + '</div>' +
+                        '<small class="text-muted" style="font-size:0.72rem;">' + v.mmsi + (v.flag_country ? ' &middot; ' + v.flag_country : '') + '</small>' +
+                        '</div>' +
+                        '<div class="d-flex gap-1">' +
+                        (hasPos ? '<a href="' + mtUrl + '" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success py-0 px-1" style="font-size:0.7rem;" title="Buka di MarineTraffic"><i class="bi bi-box-arrow-up-right"></i></a>' : '') +
+                        (hasPos ? '<button class="btn btn-sm btn-outline-primary py-0 px-1 vessel-goto-btn" style="font-size:0.7rem;" data-lat="' + v.latitude + '" data-lng="' + v.longitude + '" data-name="' + (v.name || '').replace(/"/g, '&quot;') + '"><i class="bi bi-info-circle"></i></button>' : '') +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+                }).join('');
+            })
+            .catch(function() {
+                statusDiv.textContent = 'Search failed';
+            });
+    }, 300);
+}
+
+document.getElementById('vesselSearchInput').addEventListener('input', function() {
+    searchVesselsLocal(this.value);
+});
+
+document.getElementById('vesselSearchBtn').addEventListener('click', function() {
+    searchVesselsLocal(document.getElementById('vesselSearchInput').value);
+});
+
+document.getElementById('vesselSearchResults').addEventListener('click', function(e) {
+    var gotoBtn = e.target.closest('.vessel-goto-btn');
+    if (gotoBtn) {
+        e.stopPropagation();
+        var lat = parseFloat(gotoBtn.dataset.lat);
+        var lng = parseFloat(gotoBtn.dataset.lng);
+        if (!isNaN(lat) && !isNaN(lng)) {
+            showLocationInfo(gotoBtn.dataset.name, lat, lng, '<small class="text-muted">Vessel</small>');
+        }
+        return;
+    }
+    var item = e.target.closest('.vessel-search-item');
+    if (item && item.dataset.lat && item.dataset.lng) {
+        var lat = parseFloat(item.dataset.lat);
+        var lng = parseFloat(item.dataset.lng);
+        var mmsi = item.querySelector('small') ? item.querySelector('small').textContent.split(' ')[0] : '';
+        if (!isNaN(lat) && !isNaN(lng)) {
+            var color = item.style.borderLeftColor || '#6c757d';
+            showLocationInfo(item.dataset.name, lat, lng,
+                '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + color + ';margin-right:4px;"></span>' +
+                '<small>MMSI: ' + mmsi + '</small>');
+        }
+    }
+});
 </script>
 @endsection

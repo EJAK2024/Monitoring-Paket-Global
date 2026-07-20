@@ -166,9 +166,25 @@ class PortMapController extends Controller
             Log::warning('AISStream vessels endpoint failed: '.$e->getMessage());
         }
 
+        if (empty($liveVessels)) {
+            $liveVessels = \App\Models\Vessel::select('mmsi', 'name', 'latitude', 'longitude', 'vessel_type', 'flag_country')
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->get()
+                ->map(fn ($v) => [
+                    'mmsi' => $v->mmsi,
+                    'name' => $v->name,
+                    'latitude' => $v->latitude,
+                    'longitude' => $v->longitude,
+                    'vessel_type' => $v->vessel_type,
+                    'flag_country' => $v->flag_country,
+                ])
+                ->toArray();
+        }
+
         return response()->json([
             'live' => $liveVessels,
-            'using_live_data' => ! empty($liveVessels),
+            'using_live_data' => ! empty(Cache::get('aisstream.live_vessels')),
             'timestamp' => now()->toIso8601String(),
         ]);
     }

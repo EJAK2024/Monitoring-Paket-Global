@@ -410,6 +410,24 @@ class VesselSeeder extends Seeder
             ['mmsi' => '477081800', 'imo' => '9315229', 'name' => ' ONE Horizon IV', 'vessel_type' => 'container', 'flag_country' => 'Japan', 'flag_code' => 'JP', 'latitude' => 34.0522, 'longitude' => -118.2437],
             ['mmsi' => '477081900', 'imo' => '9315231', 'name' => 'CMA CGM Pearl IV', 'vessel_type' => 'container', 'flag_country' => 'France', 'flag_code' => 'FR', 'latitude' => 43.3600, 'longitude' => -1.7700],
             ['mmsi' => '477082000', 'imo' => '9315243', 'name' => 'COSCO Neptune IV', 'vessel_type' => 'container', 'flag_country' => 'Hong Kong', 'flag_code' => 'HK', 'latitude' => 22.2855, 'longitude' => 114.1577],
+
+            // ═══════ INDONESIA — PELNI (real MMSI from MarineTraffic) ═══════
+            ['mmsi' => '525005003', 'imo' => '9032159', 'name' => 'LEUSER', 'vessel_type' => 'passenger', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -7.2500, 'longitude' => 112.7500],
+            ['mmsi' => '525005015', 'imo' => '8700292', 'name' => 'TIDAR', 'vessel_type' => 'passenger', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -6.9600, 'longitude' => 110.4200],
+            ['mmsi' => '525401266', 'imo' => '9145865', 'name' => 'DHARMA FERRY V', 'vessel_type' => 'passenger', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -7.2575, 'longitude' => 112.7521],
+
+            // ═══════ INDONESIA — PERTAMINA / PIS ═══════
+            ['mmsi' => '525108035', 'imo' => '9455791', 'name' => 'PERTAMINA GALUNGGUNG', 'vessel_type' => 'tanker', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -6.1200, 'longitude' => 106.8500],
+            ['mmsi' => '525004010', 'imo' => '9106651', 'name' => 'PERTAMINA 1025', 'vessel_type' => 'tanker', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -6.1100, 'longitude' => 106.8700],
+
+            // ═══════ INDONESIA — CARGO / GENERAL ═══════
+            ['mmsi' => '525018461', 'imo' => '9061679', 'name' => 'BERJAYA I', 'vessel_type' => 'cargo', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -2.9500, 'longitude' => 104.7600],
+            ['mmsi' => '525709283', 'imo' => '8204030', 'name' => 'ANUGRAH SAMUDRA I', 'vessel_type' => 'cargo', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -6.1000, 'longitude' => 106.8800],
+
+            // ═══════ INDONESIA — OFFSHORE / OTHER ═══════
+            ['mmsi' => '525005281', 'imo' => '9524956', 'name' => 'LOGINDO ENTERPRISE', 'vessel_type' => 'other', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => 1.2644, 'longitude' => 103.8200],
+            ['mmsi' => '525400100', 'imo' => '0', 'name' => 'MUARA MARINA', 'vessel_type' => 'other', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => 0.5300, 'longitude' => 117.1800],
+            ['mmsi' => '525501920', 'imo' => '0', 'name' => 'AS JAYA 18', 'vessel_type' => 'other', 'flag_country' => 'Indonesia', 'flag_code' => 'ID', 'latitude' => -6.1500, 'longitude' => 106.8000],
         ];
 
         $bar = $this->command->getOutput()->createProgressBar(count($vessels));
