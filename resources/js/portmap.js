@@ -928,6 +928,10 @@ window.untrackSelectedShip = untrackSelectedShip;
             flyToVesselPosition(parseFloat(gotoBtn.dataset.lat), parseFloat(gotoBtn.dataset.lng), gotoBtn.dataset.name);
             return;
         }
+        const item = e.target.closest('.vessel-search-item');
+        if (item && item.dataset.lat && item.dataset.lng) {
+            flyToVesselPosition(parseFloat(item.dataset.lat), parseFloat(item.dataset.lng), item.dataset.name);
+        }
     });
 
     document.getElementById('refreshVesselsBtn').addEventListener('click', function () {
